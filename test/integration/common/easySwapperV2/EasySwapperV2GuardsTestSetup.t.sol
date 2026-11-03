@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
@@ -99,7 +99,7 @@ abstract contract EasySwapperV2GuardsTestSetup is BackboneSetup {
     IAssetHandler.Asset[] memory assetsToAdd = new IAssetHandler.Asset[](2);
     assetsToAdd[0] = IAssetHandler.Asset({
       asset: address(torosPool),
-      assetType: uint16(AssetTypeIncomplete.CHAINLINK),
+      assetType: uint16(AssetTypeIncomplete.NESTED_VAULT),
       aggregator: torosPoolAggregator
     });
     assetsToAdd[1] = IAssetHandler.Asset({
@@ -119,7 +119,7 @@ abstract contract EasySwapperV2GuardsTestSetup is BackboneSetup {
     IHasSupportedAsset.Asset[] memory testFundAssets = new IHasSupportedAsset.Asset[](3);
     testFundAssets[0] = IHasSupportedAsset.Asset({asset: usdcData.asset, isDeposit: true});
     testFundAssets[1] = IHasSupportedAsset.Asset({asset: daiData.asset, isDeposit: true});
-    testFundAssets[2] = IHasSupportedAsset.Asset({asset: address(torosPool), isDeposit: true});
+    testFundAssets[2] = IHasSupportedAsset.Asset({asset: address(torosPool), isDeposit: false});
 
     vm.prank(manager);
     testFund = PoolLogic(

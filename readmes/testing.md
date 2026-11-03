@@ -26,6 +26,19 @@ each suite forks itself — you do **not** need to start a separate node. Provid
 Tests that need live off-chain data (aggregator swap quotes) live under `test/integration/ffi/{chainId}/`
 and run under a separate profile.
 
+### Fork blocks
+
+Suites fork at one shared block per chain, `ForkBlocks.<CHAIN>` in
+`test/integration/utils/foundry/config/ForkBlocks.sol`, so a new test should pass that constant rather
+than a literal. Refresh all six with `pnpm test-freshness:repin` (reads the `*_URL` variables from `.env`),
+then run `pnpm test`: a suite that fails at the fresh block has caught an on-chain change in the
+integration it covers. The pre-commit hook prints a warning once the blocks are older than 30 days.
+
+A suite that only makes sense at one block keeps its own literal: it replays a historical incident,
+embeds data signed for that block (Merkle claims, attestations, Pyth updates, swap calldata), covers
+an instrument that has since matured, or covers a deprecated integration. FFI suites keep their own
+pins because their swap fixtures are keyed by block.
+
 ## Running
 
 ```bash
@@ -40,7 +53,71 @@ forge test --match-contract CoreTestArbitrum
 forge test --match-test test_can_supply_into_aave
 ```
 
-Use `forge build --skip test` to check production code compiles without building the test suite.
+Use `pnpm build` (`forge build --skip test`) to check production code compiles without building the
+test suite, and `pnpm build:sizes` to also list runtime sizes and fail on any over the EIP-170 limit.
+Hardhat compiles nothing here; `pnpm compile:hardhat` only produces the artifacts and typechain types
+the deployment tasks need, and those tasks run it themselves.
+
+## Gas snapshots
+
+Two committed snapshot suites turn a gas or bytecode-size change into a file diff. They are ordinary
+tests: `pnpm test` runs them with everything else, and `pnpm test:gas` runs just them.
+
+`test/unit/GasSnapshotTest.t.sol` records the user-paid paths on a clean vault (EasySwapperV2
+deposits and the withdrawal flow, PoolLogic `deposit`, `withdrawSafe`, `withdrawToSafe`,
+`execTransaction`, `mintManagerFee`, `totalFundValue`, `createFund`) into
+`snapshots/GasSnapshotTest.json`, and the runtime size of the core contracts and PoolLogicLib into
+`snapshots/ContractSizes.json`. After changing a contract:
+
+```bash
+pnpm test:gas
+git diff snapshots/
+```
+
+Each changed line is one scenario, before and after. Commit the JSON together with the change: the
+PR then shows the figures next to the code, and CI fails when a change lands without them. A moved
+number on a pure refactor means behaviour moved too.
+
+Two things to know:
+
+- The suites run isolated (`forge-config: default.isolate = true`), so each measured call is its own
+  transaction with cold storage, as it is paid for on-chain. Snapshots taken without isolation are
+  not comparable.
+- Forge rewrites a group file with only the entries it collected in that run, so regenerate with a
+  whole contract (`pnpm test:gas`, or `--match-contract`), never with `--match-test`, before
+  committing. Forge writes the JSON without a trailing newline; `pnpm test` and `pnpm test:gas` run
+  prettier over `snapshots/` afterwards, and the commit hook does the same.
+
+`foundry.toml` compiles with the same optimizer and EVM settings as the hardhat deployment config:
+20 runs, cancun for 0.8.28, and istanbul for 0.7.6 (solc 0.7.6's own default, which is what hardhat
+uses and what Etherscan shows as "default" on the deployed contracts; forge cannot hand a 0.7.6
+compiler `cancun`, so it passes the newest target that compiler supports, which is the same
+istanbul). So these figures, and `forge build --sizes`, are the ones that ship. When touching either
+config or bumping solc, `pnpm check:compiler-parity` confirms every production contract still comes
+out of hardhat and forge with the same settings and byte-identical runtime code.
+
+### Mainnet figures
+
+`test/integration/ethereum/core/EthereumGasSnapshotTest.t.sol` measures the same frontend paths on
+production Ethereum vaults. A vault-agnostic base forks mainnet at `ForkBlocks.ETHEREUM`, swaps this
+branch's PoolLogic, PoolManagerLogic, PoolFactory, AssetHandler and EasySwapperV2 in behind the live
+proxies, and runs the same tests (deposit, native deposit, the withdrawal flow, `totalFundValue`,
+`mintManagerFee`) against whichever vault a concrete contract names. Each vault records to
+`snapshots/<ContractName>.json`; today Ethereum Bull 3X (leveraged) and mStable Pendled sUSDe (the
+largest by value).
+A test that does not apply to a vault (no native deposit asset, or a DYTM position whose withdrawal
+needs frontend-built data) is `vm.skip`ped, so it stays visible.
+
+An isolated snapshot equals the transaction's receipt gas (replaying a live
+`depositWithCustomCooldown` reproduced its 751,298 gas exactly), so with the real asset mix these are
+the numbers Ethereum users pay. After `pnpm test-freshness:repin`, run `pnpm test:gas` and commit
+the regenerated files; small drifts there reflect vault state, not code. The unit suite stays the
+fast, state-independent signal.
+
+A protocol integration can add the same kind of `test_gas_*` snapshots to its fork suite (asset
+guard `getBalance`, a withdrawal, the main `execTransaction` legs): a separate test contract carrying
+the isolate config, the contract name as the group, and the resulting `snapshots/<Group>.json`
+committed.
 
 ## Skipping and excluding tests
 
@@ -62,5 +139,7 @@ forge test --match-contract HyperliquidWithdrawalManagerTestsSkip --no-match-con
 
 ## CI
 
-`test` runs on every push via `.github/workflows/basic-check.yml`. FFI tests are excluded from
-that gate (they depend on external quote APIs); run them locally or on demand.
+`test` runs on every push via `.github/workflows/basic-check.yml`, preceded by
+`pnpm build:sizes` (fails on any production contract over the EIP-170 limit) and followed by `git diff --exit-code -- snapshots/` (the gas snapshots above must be
+committed). FFI tests are excluded from that gate (they depend on external quote APIs); run them
+locally or on demand.

@@ -8,6 +8,7 @@ import {IUniswapV2Factory} from "contracts/interfaces/uniswapV2/IUniswapV2Factor
 import {OneInchV6GuardTestSetup} from "test/integration/common/oneInch/OneInchV6GuardTestSetup.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract OneInchV6GuardTestArbitrum is OneInchV6GuardTestSetup, ArbitrumSetup {
   /// @dev Only this suite needs Arbitrum's UniswapV2 factory, so it stays scoped here.
@@ -19,7 +20,7 @@ contract OneInchV6GuardTestArbitrum is OneInchV6GuardTestSetup, ArbitrumSetup {
       IUniswapV3Factory(ArbitrumConfig.UNISWAP_V3_FACTORY),
       address(0)
     )
-    ArbitrumSetup(489036888)
+    ArbitrumSetup(ForkBlocks.ARBITRUM)
   {}
 
   function setUp() public override(OneInchV6GuardTestSetup, ArbitrumSetup) {

@@ -6,9 +6,9 @@ import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {SkyPSM3ContractGuardTestSetup} from "test/integration/common/sky/SkyPSM3ContractGuardTestSetup.t.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
-contract SkyPSM3ContractGuardTestArbitrum is SkyPSM3ContractGuardTestSetup, ArbitrumSetup {
-  uint256 private testForkBlockNumber = 319124600;
+contract SkyPSM3ContractGuardTestArbitrumSkip is SkyPSM3ContractGuardTestSetup, ArbitrumSetup {
   address private skyPSM3 = 0x2B05F8e1cACC6974fD79A673a341Fe1f58d27266;
   address private susdsUsdsPriceAggregator = 0x84AB0c8C158A1cD0d215BE2746cCa668B79cc287;
 
@@ -28,7 +28,7 @@ contract SkyPSM3ContractGuardTestArbitrum is SkyPSM3ContractGuardTestSetup, Arbi
 
   constructor()
     SkyPSM3ContractGuardTestSetup(skyPSM3, usdsData, susdsData, susdsUsdsPriceAggregator)
-    ArbitrumSetup(testForkBlockNumber)
+    ArbitrumSetup(ForkBlocks.ARBITRUM)
   {}
 
   function setUp() public override(SkyPSM3ContractGuardTestSetup, ArbitrumSetup) {

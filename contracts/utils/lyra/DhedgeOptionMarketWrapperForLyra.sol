@@ -2,9 +2,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/Math.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/math/Math.sol";
 
 import "../../guards/contractGuards/LyraOptionMarketWrapperContractGuard.sol";
 import "../../interfaces/aave/v2/ILendingPool.sol";

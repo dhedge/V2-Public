@@ -6,15 +6,11 @@ import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 // solhint-disable-next-line max-line-length
 import {VelodromeNonfungiblePositionGuard} from "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol";
-// solhint-disable-next-line max-line-length
-import {VelodromeCLGaugeContractGuard} from "contracts/guards/contractGuards/velodrome/VelodromeCLGaugeContractGuard.sol";
 import {VelodromeCLAssetGuard} from "contracts/guards/assetGuards/velodrome/VelodromeCLAssetGuard.sol";
-import {RewardAssetGuard} from "contracts/guards/assetGuards/RewardAssetGuard.sol";
 // solhint-disable-next-line max-line-length
 import {IVelodromeNonfungiblePositionManager} from "contracts/interfaces/velodrome/IVelodromeNonfungiblePositionManager.sol";
 import {IVelodromeCLFactory} from "contracts/interfaces/velodrome/IVelodromeCLFactory.sol";
 import {IVelodromeCLPool} from "contracts/interfaces/velodrome/IVelodromeCLPool.sol";
-import {IVelodromeCLGauge} from "contracts/interfaces/velodrome/IVelodromeCLGauge.sol";
 import {ERC20Asset} from "contracts/test/TestAssets.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
@@ -22,10 +18,8 @@ import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {SingleFundTestSetup} from "test/integration/utils/foundry/SingleFundTestSetup.t.sol";
 
 /// @notice Shared fixture for the Velodrome/Aerodrome concentrated liquidity guards: a vault that
-/// can mint CL positions, stake them in a gauge for emissions, and be valued and unwound while
-/// holding them.
+/// can mint CL positions and be valued and unwound while holding them.
 abstract contract VelodromeCLTestSetup is SingleFundTestSetup {
-  uint16 internal constant REWARD_ASSET_TYPE = 200;
   uint256 internal constant MAX_POSITIONS = 3;
   uint256 internal constant DEADLINE = type(uint256).max;
   bytes32 internal constant VELODROME_NFT_TYPE = keccak256("VELODROME_NFT_TYPE");
@@ -33,14 +27,11 @@ abstract contract VelodromeCLTestSetup is SingleFundTestSetup {
   struct VelodromeCLConfig {
     address nonfungiblePositionManager;
     address clFactory;
-    address protocolToken; // VELO / AERO
-    address protocolTokenOracle;
     address token0;
     address token1;
     address token0Oracle;
     address token1Oracle;
     int24 tickSpacing;
-    address gauge;
     uint256 amount0;
     uint256 amount1;
   }
@@ -68,7 +59,6 @@ abstract contract VelodromeCLTestSetup is SingleFundTestSetup {
 
     positionGuard = new VelodromeNonfungiblePositionGuard(MAX_POSITIONS, address(nftTrackerStorageProxy));
     governance.setContractGuard({extContract: cl.nonfungiblePositionManager, guardAddress: address(positionGuard)});
-    governance.setContractGuard({extContract: cl.gauge, guardAddress: address(new VelodromeCLGaugeContractGuard())});
 
     clAssetGuard = new VelodromeCLAssetGuard();
     governance.setAssetGuard({
@@ -76,23 +66,9 @@ abstract contract VelodromeCLTestSetup is SingleFundTestSetup {
       guardAddress: address(clAssetGuard)
     });
 
-    // Emissions are only worth holding for a vault that holds the position earning them.
-    RewardAssetGuard.RewardAssetSetting[] memory rewardSettings = new RewardAssetGuard.RewardAssetSetting[](1);
-    uint16[] memory linkedAssetTypes = new uint16[](1);
-    linkedAssetTypes[0] = uint16(AssetTypeIncomplete.VELODROME_CL);
-    rewardSettings[0] = RewardAssetGuard.RewardAssetSetting({
-      rewardToken: cl.protocolToken,
-      linkedAssetTypes: linkedAssetTypes,
-      linkedAssets: new address[](0)
-    });
-    governance.setAssetGuard({
-      assetType: REWARD_ASSET_TYPE,
-      guardAddress: address(new RewardAssetGuard(rewardSettings))
-    });
-
     unsupportedToken = new ERC20Asset("Unsupported", "UNS");
 
-    IAssetHandler.Asset[] memory assetsToAdd = new IAssetHandler.Asset[](4);
+    IAssetHandler.Asset[] memory assetsToAdd = new IAssetHandler.Asset[](3);
     assetsToAdd[0] = _chainlinkAsset(cl.token0, cl.token0Oracle);
     assetsToAdd[1] = _chainlinkAsset(cl.token1, cl.token1Oracle);
     assetsToAdd[2] = IAssetHandler.Asset({
@@ -100,19 +76,13 @@ abstract contract VelodromeCLTestSetup is SingleFundTestSetup {
       assetType: uint16(AssetTypeIncomplete.VELODROME_CL),
       aggregator: address(usdPriceAggregator)
     });
-    assetsToAdd[3] = IAssetHandler.Asset({
-      asset: cl.protocolToken,
-      assetType: REWARD_ASSET_TYPE,
-      aggregator: cl.protocolTokenOracle
-    });
     assetHandlerProxy.addAssets(assetsToAdd);
 
     vm.stopPrank();
 
-    IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](3);
+    IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](2);
     supportedAssets[0] = IHasSupportedAsset.Asset({asset: cl.token0, isDeposit: true});
     supportedAssets[1] = IHasSupportedAsset.Asset({asset: cl.token1, isDeposit: true});
-    supportedAssets[2] = IHasSupportedAsset.Asset({asset: cl.protocolToken, isDeposit: false});
 
     vm.prank(manager);
     fund = PoolLogic(
@@ -135,9 +105,7 @@ abstract contract VelodromeCLTestSetup is SingleFundTestSetup {
     _makeDeposit(fund, investor, cl.token0, cl.amount0 * 6);
     _makeDeposit(fund, investor, cl.token1, cl.amount1 * 6);
 
-    // Clear the post-deposit lockup up front. It is core behaviour covered by the core suites, and
-    // waiting it out mid-test would accrue emissions between a measurement and the withdrawal it
-    // is being compared against.
+    // Clear the post-deposit lockup up front: it is core behaviour covered by the core suites.
     skip(poolFactoryProxy.getExitCooldown() + 1);
   }
 
@@ -220,11 +188,5 @@ abstract contract VelodromeCLTestSetup is SingleFundTestSetup {
 
   function _trackedTokenIds() internal view returns (uint256[] memory tokenIds) {
     tokenIds = nftTrackerStorageProxy.getAllUintIds(VELODROME_NFT_TYPE, address(fund));
-  }
-
-  /// @dev Approves the position NFT to the gauge and stakes it for emissions.
-  function _stake(uint256 _tokenId) internal {
-    _managerExec(cl.nonfungiblePositionManager, abi.encodeWithSelector(IERC20.approve.selector, cl.gauge, _tokenId));
-    _managerExec(cl.gauge, abi.encodeWithSelector(IVelodromeCLGauge.deposit.selector, _tokenId));
   }
 }

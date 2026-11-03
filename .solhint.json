@@ -10,6 +10,7 @@
     "no-global-import": "off",
     "gas-custom-errors": "off",
     "immutable-vars-naming": "off",
-    "no-unused-import": "error"
+    "no-unused-import": "error",
+    "import-path-check": "off"
   }
 }

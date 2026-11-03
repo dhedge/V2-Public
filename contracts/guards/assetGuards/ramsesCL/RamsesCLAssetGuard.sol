@@ -3,9 +3,9 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {ERC20Guard} from "../ERC20Guard.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
 
 import {RamsesNonfungiblePositionGuard} from "../../contractGuards/ramsesCL/RamsesNonfungiblePositionGuard.sol";
 import {IHasAssetInfo} from "../../../interfaces/IHasAssetInfo.sol";

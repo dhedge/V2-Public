@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 import {IPancakeMasterChefV3} from "contracts/interfaces/pancake/IPancakeMasterChefV3.sol";
 import {PancakeNonfungiblePositionGuard} from "contracts/guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol";
 import {PancakeMasterChefV3Guard} from "contracts/guards/contractGuards/pancake/PancakeMasterChefV3Guard.sol";
@@ -205,6 +205,59 @@ abstract contract PancakeCLTestSetup is BackboneSetup {
     );
     vm.expectRevert(bytes("position is not in track"));
     fund.execTransaction(NFTPositionManagerAddr, increaseCallData);
+  }
+
+  /// @dev An emptied position stays tracked, so the position asset can be dropped from the vault
+  /// while the NFT still exists. Increasing liquidity on it afterwards would move vault tokens into
+  /// a position nothing values.
+  function test_pancakeCL_revert_increase_when_position_asset_not_enabled() public {
+    vm.startPrank(manager);
+    uint256 tokenId = _mint();
+
+    (, , , , , , , uint128 liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
+    bytes[] memory calls = new bytes[](2);
+    calls[0] = abi.encodeWithSelector(
+      IPancakeNonfungiblePositionManager.decreaseLiquidity.selector,
+      IPancakeNonfungiblePositionManager.DecreaseLiquidityParams({
+        tokenId: tokenId,
+        liquidity: liquidity,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: block.timestamp + 1000
+      })
+    );
+    calls[1] = abi.encodeWithSelector(
+      IPancakeNonfungiblePositionManager.collect.selector,
+      IPancakeNonfungiblePositionManager.CollectParams({
+        tokenId: tokenId,
+        recipient: address(fund),
+        amount0Max: type(uint128).max,
+        amount1Max: type(uint128).max
+      })
+    );
+    fund.execTransaction(NFTPositionManagerAddr, abi.encodeWithSelector(IMulticall.multicall.selector, calls));
+
+    fundManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), _toArray(NFTPositionManagerAddr));
+    assertFalse(fundManagerLogic.isSupportedAsset(NFTPositionManagerAddr));
+    assertEq(pancakeContractGuard.getOwnedTokenIds(address(fund)).length, 1);
+
+    uint256 valueBefore = fundManagerLogic.totalFundValue();
+
+    bytes memory increaseCallData = abi.encodeWithSelector(
+      IPancakeNonfungiblePositionManager.increaseLiquidity.selector,
+      IPancakeNonfungiblePositionManager.IncreaseLiquidityParams({
+        tokenId: tokenId,
+        amount0Desired: 1e18,
+        amount1Desired: 1_000e6,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: block.timestamp + 1000
+      })
+    );
+    vm.expectRevert(bytes("cl asset not enabled"));
+    fund.execTransaction(NFTPositionManagerAddr, increaseCallData);
+
+    assertEq(fundManagerLogic.totalFundValue(), valueBefore);
   }
 
   function test_pancakeCL_mint_and_decrease() public {

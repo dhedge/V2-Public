@@ -18,10 +18,10 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Math} from "@openzeppelin/contracts/math/Math.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {Ownable} from "@openzeppelin/v3/contracts/access/Ownable.sol";
+import {Math} from "@openzeppelin/v3/contracts/math/Math.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
 
 import {IERC20Extended} from "../interfaces/IERC20Extended.sol";
 import {IHasAssetInfo} from "../interfaces/IHasAssetInfo.sol";

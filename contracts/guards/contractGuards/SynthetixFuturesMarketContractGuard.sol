@@ -33,8 +33,8 @@
 
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/synthetix/IFuturesMarket.sol";
 import "../../interfaces/IPoolManagerLogic.sol";
 import "../../interfaces/IHasSupportedAsset.sol";

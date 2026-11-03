@@ -15,7 +15,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 
 import "../../utils/TxDataUtils.sol";
 import "../../interfaces/guards/IGuard.sol";

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/v5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {OwnableUpgradeable} from "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 import {HyperEVMSetup} from "test/integration/utils/foundry/chains/HyperEVMSetup.t.sol";
@@ -37,8 +37,6 @@ import {IChangeAssets} from "test/integration/utils/foundry/CoreBackboneSetup.so
 contract HyperliquidWithdrawalManagerTestsSkip is HyperEVMSetup, PrecompileHelper {
   using FixedPointMathLib for uint256;
 
-  uint256 public constant blockNumber = 36674788;
-
   IHyperliquidWithdrawalManager internal withdrawalManager;
 
   /// @notice A non-manager caller used to prove WM-driven actions are public.
@@ -58,6 +56,7 @@ contract HyperliquidWithdrawalManagerTestsSkip is HyperEVMSetup, PrecompileHelpe
   ///      *system* spot asset reached via the special system address 0x2222...2222.
   uint64 internal constant _HYPE_TOKEN_INDEX = 150;
   uint64 internal constant _HYPE_SPOT_INDEX = 107;
+  uint32 internal constant _HYPE_PERP_INDEX = 159;
 
   /// @dev HIP-3 dex id 1 and a perp on it (asset id = 100_000 + dexId * 10_000 + meta index),
   ///      mirroring the production xyz:GOLD deployment. The Core simulator has no per-dex accounting
@@ -78,11 +77,6 @@ contract HyperliquidWithdrawalManagerTestsSkip is HyperEVMSetup, PrecompileHelpe
   function setUp() public virtual override {
     super.setUp();
     _deployAndWireWithdrawalManager();
-  }
-
-  /// @dev Pin a fresher fork block than the shared HyperEVM default.
-  function _forkBlockNumber() internal pure override returns (uint256) {
-    return blockNumber;
   }
 
   /// @dev Use the real forked USDC/USD Chainlink answer instead of pinning it to exactly $1, so the
@@ -284,7 +278,7 @@ contract HyperliquidWithdrawalManagerTestsSkip is HyperEVMSetup, PrecompileHelpe
   function _enableHypeSpotAsset() internal {
     vm.startPrank(owner);
     address hypeAggregator = address(
-      new HyperliquidSpotPriceAggregator(_HYPE_SPOT_INDEX, HyperEVMConfig.USDC_USD_PRICE_FEED)
+      new HyperliquidSpotPriceAggregator(_HYPE_SPOT_INDEX, HyperEVMConfig.USDC_USD_PRICE_FEED, _HYPE_PERP_INDEX, 100)
     );
     assetHandlerProxy.addAsset(
       HyperEVMConfig.HYPE_SYSTEM_ADDRESS,
@@ -304,6 +298,7 @@ contract HyperliquidWithdrawalManagerTestsSkip is HyperEVMSetup, PrecompileHelpe
   function _buyHype(uint64 sizeE8) internal returns (uint32 hypeAssetId) {
     uint64 hypePrice = 40e6;
     hyperCore.setSpotPx(uint32(_HYPE_SPOT_INDEX), hypePrice);
+    _setReferenceOraclePx(_HYPE_PERP_INDEX, uint256(hypePrice) * 1e2);
 
     uint64 normalizedPrice = hypePrice * 100; // 6 -> 8 decimals
     uint64 limitPrice = normalizedPrice + ((normalizedPrice * 1) / 100); // +1% slippage for immediate fill

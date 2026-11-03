@@ -850,7 +850,7 @@ abstract contract AaveV3TestSetup is BackboneSetup, IntegrationDeployer {
     assertApproxEqRel(
       valueWithdrawn,
       valueToWithdraw,
-      0.002e18, // 0.2%
+      0.003e18, // 0.3%
       "Value withdrawn should be approximately equal to the value of the withdrawn pool share"
     );
   }

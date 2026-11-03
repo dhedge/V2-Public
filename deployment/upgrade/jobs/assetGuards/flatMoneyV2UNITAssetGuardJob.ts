@@ -1,8 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 import { AssetType } from "../assetsJob";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 
 export const flatMoneyV2UNITAssetGuardJob: IJob<void> = async (
   config: IUpgradeConfig,

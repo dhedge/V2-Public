@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/v3/contracts/token/ERC721/IERC721.sol";
 
 /**
  * @title ERC721 extension with helper functions that allow the enumeration of NFT tokens.

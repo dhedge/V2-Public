@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 export const veloV2UniV2RouterJob: IJob<void> = async (

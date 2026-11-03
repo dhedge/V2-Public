@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 export const dhedgeStakingV2NFTJSONJob: IJob<void> = async (

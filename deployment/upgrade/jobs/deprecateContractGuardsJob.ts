@@ -1,10 +1,10 @@
 import csv from "csvtojson";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTransactions } from "../../deploymentHelpers";
+import { proposeTransactions } from "../../helpers/safe";
 import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames, IDeployedContractGuard } from "../../types";
-import { removeContractGuardFromFile } from "./helpers";
-import type { MetaTransactionData } from "../../deploymentHelpers";
+import { removeContractGuardFromFile } from "../../helpers/csv";
+import type { MetaTransactionData } from "../../helpers/safe";
 
 type MetaTransactionDataWithGuardedAddress = MetaTransactionData & { guardedAddress: string };
 
@@ -19,13 +19,6 @@ export const deprecateContractGuardsJob: IJob<void> = async (
     return console.warn("No deprecatedContractGuardsFileName configured: skipping");
   }
 
-  // This is a workaround because Governance's setContractGuard doesn't accept address(0) as a guard address
-  if (!versions[config.oldTag].contracts.ClosedContractGuard) {
-    return console.warn("ClosedContractGuard not found: skipping");
-  }
-
-  const emptyContractGuardAddress = versions[config.oldTag].contracts.ClosedContractGuard;
-
   const deprecatedContractGuards: IDeployedContractGuard[] = await csv().fromFile(
     filenames.deprecatedContractGuardsFileName,
   );
@@ -34,27 +27,27 @@ export const deprecateContractGuardsJob: IJob<void> = async (
   const governanceABI = new hre.ethers.utils.Interface(Governance.abi);
   const governance = await hre.ethers.getContractAt("Governance", versions[config.oldTag].contracts.Governance);
 
-  console.log("Will remove deprecated guards from Governance");
+  console.log("Will deprecate contract guards in Governance (set to address(0))");
 
   const transactionsList = await Promise.all(
     deprecatedContractGuards.map<Promise<MetaTransactionDataWithGuardedAddress | undefined>>(
       async (deprecatedContractGuard) => {
         const guardedAddress = deprecatedContractGuard.contractAddress;
         const contractGuardSet = await governance.contractGuards(guardedAddress);
-        const guardAddress = deprecatedContractGuard.guardAddress;
 
-        if (contractGuardSet.toLowerCase() !== guardAddress.toLowerCase()) {
-          console.warn(`Guard ${guardAddress} is not set for ${guardedAddress}: skipping`);
+        // Skip if already deprecated (guard is address(0))
+        if (contractGuardSet === hre.ethers.constants.AddressZero) {
+          console.warn(`Contract ${guardedAddress} already deprecated (address(0)): skipping`);
           return;
         }
 
         console.log(
-          `Removing guard ${deprecatedContractGuard.guardName} for ${guardedAddress} / ${deprecatedContractGuard.description}`,
+          `Deprecating guard ${deprecatedContractGuard.guardName} for ${guardedAddress} / ${deprecatedContractGuard.description}`,
         );
 
         const setContractGuardTxData = governanceABI.encodeFunctionData("setContractGuard", [
           guardedAddress,
-          emptyContractGuardAddress,
+          hre.ethers.constants.AddressZero,
         ]);
 
         return {
@@ -76,6 +69,7 @@ export const deprecateContractGuardsJob: IJob<void> = async (
       await removeContractGuardFromFile(filenames.contractGuardsFileName, guardedAddress);
     }
     await proposeTransactions(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       safeTransactionData.map(({ guardedAddress, ...txData }) => txData),
       "Deprecate contract guards",
       config,

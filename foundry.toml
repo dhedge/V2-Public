@@ -2,14 +2,30 @@
 src = 'contracts'
 out = 'out'
 libs = ['node_modules', 'lib']
+# Every remapping is listed explicitly below; the libraries' own package names would otherwise map the
+# bare `@openzeppelin/contracts` prefix to whichever OpenZeppelin generation forge scans first.
+auto_detect_remappings = false
 test = 'test'
 cache_path = 'cache_forge'
 verbosity = 2
 evm_version = 'cancun'
 optimizer = true
-optimizer_runs = 200
+# Production setting: deployments compile through hardhat.config.ts with 20 runs. Matching it keeps
+# gas snapshots and `forge build --sizes` at the figures that actually ship.
+optimizer_runs = 20
 no_match_contract = "Skip"
 ignored_warnings_from = ["lib/forge-std"]
+# One remapping set for Foundry and hardhat. The bare `@openzeppelin/contracts` prefix means v5, for our 0.8
+# contracts and for third-party 0.8 code such as LayerZero alike; the 0.7 contracts import `@openzeppelin/v3/...`. Uniswap's node_modules sources are patched to the v3 prefix
+# (patches/@uniswap__v3-periphery@1.4.4.patch) so the bare prefix has a single meaning everywhere.
+remappings = [
+  'forge-std/=lib/forge-std/src/',
+  '@uniswap/=node_modules/@uniswap/',
+  '@openzeppelin/v3/contracts/=lib/openzeppelin-contracts-v3/contracts/',
+  '@openzeppelin/v3/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable-v3/contracts/',
+  '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
+  '@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/',
+]
 
 # Profile for FFI-dependent tests - inherits everything from default
 [profile.ffi-tests]

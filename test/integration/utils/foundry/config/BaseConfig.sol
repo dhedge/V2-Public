@@ -19,7 +19,6 @@ library BaseConfig {
   address public constant WBTC = 0x0555E30da8f98308EdB960aa94C0Db47230d2B9c;
   address public constant DAI = 0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb;
   address public constant cbBTC = 0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf;
-  address public constant AERO = 0x940181a94A35A4569E4529A3CDfB74e38FD98631;
   address public constant rETH = 0xB6fe221Fe9EeF5aBa221c348bA20A1Bf5e73624c;
 
   // Oracles

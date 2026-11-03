@@ -1,6 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../types";
+import { OZ_V3_INITIALIZER_KINDS } from "../../helpers/upgradeValidation";
 
 export const poolLogicAndManagerLogicJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -36,7 +38,7 @@ export const poolLogicAndManagerLogicJob: IJob<void> = async (
     libraries: { PoolLogicLib: poolLogicLib.address },
   });
   const poolLogic = await upgrades.prepareUpgrade(oldPoolLogicProxy, PoolLogic, {
-    unsafeAllow: ["external-library-linking"],
+    unsafeAllow: ["external-library-linking", ...OZ_V3_INITIALIZER_KINDS],
   });
   console.log("PoolLogic deployed to:", poolLogic);
   versions[config.newTag].contracts.PoolLogic = poolLogic;

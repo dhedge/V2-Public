@@ -10,7 +10,7 @@ import {IGmxReader} from "../../interfaces/gmx/IGmxReader.sol";
 import {IGmxMarket} from "../../interfaces/gmx/IGmxMarket.sol";
 import {GmxDataStoreLib} from "./GmxDataStoreLib.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import {IAggregatorV3Interface as IChainlinkAggregatorV3} from "../../interfaces/IAggregatorV3Interface.sol";
 import {IGmxVirtualTokenResolver} from "../../interfaces/gmx/IGmxVirtualTokenResolver.sol";
 import {GmxStructs} from "./GmxStructs.sol";

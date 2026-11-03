@@ -4,7 +4,6 @@ pragma abicoder v2;
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
-import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {PoolUnitTestSetup} from "test/unit/PoolUnitTestSetup.t.sol";
 
 contract PoolEntryExitFeesTest is PoolUnitTestSetup {
@@ -19,24 +18,7 @@ contract PoolEntryExitFeesTest is PoolUnitTestSetup {
     (daoFeeNumerator, daoFeeDenominator) = poolFactoryProxy.getDaoFee();
 
     // Create a test dHEDGE pool with USDC enabled as deposit asset.
-    IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](1);
-    supportedAssets[0] = IHasSupportedAsset.Asset({asset: address(usdc), isDeposit: true});
-
-    vm.prank(manager);
-    testPool = PoolLogic(
-      poolFactoryProxy.createFund({
-        _privatePool: false,
-        _manager: manager,
-        _managerName: "Manager",
-        _fundName: "Test Vault",
-        _fundSymbol: "TV",
-        _performanceFeeNumerator: 0,
-        _managerFeeNumerator: 0,
-        _entryFeeNumerator: 0,
-        _exitFeeNum: 0,
-        _supportedAssets: supportedAssets
-      })
-    );
+    testPool = _createFund(_toSupportedAssets(address(usdc), true));
     testPoolManagerLogic = PoolManagerLogic(testPool.poolManagerLogic());
   }
 

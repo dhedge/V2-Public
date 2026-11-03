@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { TAssetConfig, IVelodromeTWAPAggregatorConfig, IVelodromeV2TWAPAggregatorConfig } from "./oracleTypes";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { Address } from "../../../types";
 
 type IVelodromeTWAPAggregatorType = "VelodromeTWAPAggregator" | "VelodromeV2TWAPAggregator";

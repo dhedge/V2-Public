@@ -2,8 +2,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
@@ -13,11 +13,11 @@ import {IOndoGMSwap} from "contracts/interfaces/ondo/IOndoGMSwap.sol";
 import {IOndoAttestationOracle} from "contracts/interfaces/ondo/IOndoAttestationOracle.sol";
 import {OndoGMSwapContractGuard} from "contracts/guards/contractGuards/ondo/OndoGMSwapContractGuard.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 abstract contract OndoGMSwapTestSetup is BackboneSetup {
   // --- Ondo addresses ---
   address public constant GOOGLON = 0xbA47214eDd2bb43099611b208f75E4b42FDcfEDc;
-  address public constant GM_TOKEN_MANAGER = 0x2c158BC456e027b2AfFCCadF1BDBD9f5fC4c5C8c;
   address internal constant ONDO_IDENTITY_REGISTRY = 0xcf6958D69d535FD03BD6Df3F4fe6CDcd127D97df;
   address internal constant ONDO_IDENTITY_GROUP = 0x428ECB70E90d1527A5f5e177789f51747b883F34;
 
@@ -81,7 +81,7 @@ abstract contract OndoGMSwapTestSetup is BackboneSetup {
         "initialize(address,address,address,address)",
         owner,
         address(poolFactoryProxy),
-        GM_TOKEN_MANAGER,
+        EthereumConfig.ONDO_GM_TOKEN_MANAGER,
         usdcData.asset
       )
     );
@@ -102,7 +102,7 @@ abstract contract OndoGMSwapTestSetup is BackboneSetup {
         INITIALIZE_ORACLE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           ONDO_USER_ID,
           3600, // maxProofAge
           1000, // sanityDeviationBps (10%)
@@ -238,12 +238,16 @@ abstract contract OndoGMSwapTestSetup is BackboneSetup {
 
   // --- Helper: mock GM token pause state ---
   function _mockMintingPaused(address _asset, bool paused) internal {
-    vm.mockCall(GM_TOKEN_MANAGER, abi.encodeWithSignature("gmTokenMintingPaused(address)", _asset), abi.encode(paused));
+    vm.mockCall(
+      EthereumConfig.ONDO_GM_TOKEN_MANAGER,
+      abi.encodeWithSignature("gmTokenMintingPaused(address)", _asset),
+      abi.encode(paused)
+    );
   }
 
   function _mockRedemptionsPaused(address _asset, bool paused) internal {
     vm.mockCall(
-      GM_TOKEN_MANAGER,
+      EthereumConfig.ONDO_GM_TOKEN_MANAGER,
       abi.encodeWithSignature("gmTokenRedemptionsPaused(address)", _asset),
       abi.encode(paused)
     );

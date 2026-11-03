@@ -15,9 +15,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
+import "@openzeppelin/v3/contracts/token/ERC721/IERC721.sol";
 
 import "../../utils/tracker/DhedgeNftTrackerStorage.sol";
 import "../../utils/TxDataUtils.sol";

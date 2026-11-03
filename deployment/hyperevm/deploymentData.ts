@@ -92,5 +92,6 @@ export const hyperevmProdFileNames: IFileNames = {
   assetsFileName: "./config/hyperevm/dHEDGE Assets list.json",
   assetGuardsFileName: "./config/hyperevm/dHEDGE Governance Asset Guards.csv",
   contractGuardsFileName: "./config/hyperevm/dHEDGE Governance Contract Guards.csv",
+  deprecatedContractGuardsFileName: "./config/hyperevm/dHEDGE Deprecated Contract Guards.csv",
   approvedPerpsFileName: "./config/hyperevm/dHEDGE Approved Perps.json",
 } as const;

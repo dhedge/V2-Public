@@ -1,7 +1,8 @@
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../types";
 
 export const referralManagerJob: IJob<void> = async (
@@ -79,7 +80,7 @@ const deployReferralManager = async (
       try {
         referralManagerImplementation = await getImplementationAddress(provider, referralManagerProxy);
         break;
-      } catch (e) {
+      } catch {
         console.log(`Attempt ${i + 1}/5: Waiting for proxy to be indexed...`);
         await new Promise((resolve) => setTimeout(resolve, 5000));
       }

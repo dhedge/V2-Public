@@ -3,9 +3,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
-import {AaveV3TestOptimism, AaveV3TestOptimismSharedData} from "test/integration/ovm/aaveV3/AaveV3TestOptimism.t.sol";
+import {AaveV3TestOptimism} from "test/integration/ovm/aaveV3/AaveV3TestOptimism.t.sol";
 import {DeploymentDryRunOptimism} from "test/integration/utils/foundry/dryRun/DeploymentDryRunOptimism.t.sol";
 import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
@@ -16,9 +16,10 @@ import {Governance} from "contracts/Governance.sol";
 import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol";
 import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3DryRunOptimism is DeploymentDryRunOptimism {
-  constructor() DeploymentDryRunOptimism(AaveV3TestOptimismSharedData.FORK_BLOCK_NUMBER, getTorosVaults()) {}
+  constructor() DeploymentDryRunOptimism(ForkBlocks.OPTIMISM, getTorosVaults()) {}
 
   function setUp() public override {
     super.setUp();
@@ -40,7 +41,6 @@ contract AaveV3DryRunOptimism is DeploymentDryRunOptimism {
     proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(poolFactory))), latestPoolFactory);
     proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(address(assetHandler))), address(new AssetHandler()));
     poolFactory.setLogic(latestPoolLogic, latestPoolManagerLogic);
-    governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.SNX_SYNTH), aaveV3Test.erc20Guard());
     governance.setAssetGuard(uint16(AssetTypes.AssetTypeIncomplete.LENDING_ENABLED), aaveV3Test.erc20Guard());
     governance.setAssetGuard(
       uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),

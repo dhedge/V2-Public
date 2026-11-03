@@ -16,11 +16,11 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {ClosedAssetGuard} from "../ClosedAssetGuard.sol";
 import {OutsidePositionWithdrawalHelper} from "../OutsidePositionWithdrawalHelper.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
+import {NonDepositAssetGuard} from "../shared/NonDepositAssetGuard.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {IMidasRedemptionVault} from "../../../interfaces/midas/IMidasRedemptionVault.sol";
@@ -59,11 +59,8 @@ import {PoolsWhitelist} from "../../../utils/PoolsWhitelist.sol";
 ///         (`PoolManagerLogic._addAsset`) and payouts are transferred inline. The withdrawer then
 ///         receives `portion` of the already-reduced mToken balance from the type 42 guard, totalling
 ///         exactly `portion * (free + pending)`. Type 43 must stay greater than type 42.
-contract MidasPendingRedemptionAssetGuard is OutsidePositionWithdrawalHelper, ClosedAssetGuard, IAddAssetCheckGuard {
+contract MidasPendingRedemptionAssetGuard is OutsidePositionWithdrawalHelper, ClosedAssetGuard, NonDepositAssetGuard {
   using SafeMath for uint256;
-
-  // solhint-disable-next-line const-name-snakecase
-  bool public constant override isAddAssetCheckGuard = true;
 
   /// @notice Total mToken amount across the pool's still-Pending redemption requests (18 decimals).
   /// @param _pool The pool logic address.
@@ -156,8 +153,8 @@ contract MidasPendingRedemptionAssetGuard is OutsidePositionWithdrawalHelper, Cl
   ///      No `removeAssetCheck` override is needed: while a request is Pending, `getBalance` is
   ///      non-zero (and while one is Canceled it reverts outright), so removal is already rejected
   ///      by the standard non-empty-asset checks.
-  function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) external view override {
-    require(!_asset.isDeposit, "deposit not supported");
+  function _addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) internal view override {
+    super._addAssetCheck(_poolLogic, _asset);
 
     address contractGuard = _getContractGuard(_poolLogic, _asset.asset);
     require(

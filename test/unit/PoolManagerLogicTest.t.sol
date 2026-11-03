@@ -139,18 +139,6 @@ contract PoolManagerLogicTest is PoolUnitTestSetup {
     IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](1);
     supportedAssets[0] = IHasSupportedAsset.Asset({asset: address(usdc), isDeposit: true});
 
-    vm.prank(manager);
-    otherFund = poolFactoryProxy.createFund({
-      _privatePool: false,
-      _manager: manager,
-      _managerName: "Manager",
-      _fundName: "Other Fund",
-      _fundSymbol: "OTH",
-      _performanceFeeNumerator: 0,
-      _managerFeeNumerator: 0,
-      _entryFeeNumerator: 0,
-      _exitFeeNum: 0,
-      _supportedAssets: supportedAssets
-    });
+    otherFund = address(_createFund(supportedAssets));
   }
 }

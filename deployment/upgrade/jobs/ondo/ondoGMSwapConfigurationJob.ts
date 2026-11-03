@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTransactions } from "../../../deploymentHelpers";
+import { proposeTransactions } from "../../../helpers/safe";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 export const ondoGMSwapConfigurationJob: IJob<void> = async (
@@ -38,32 +38,23 @@ export const ondoGMSwapConfigurationJob: IJob<void> = async (
   console.log("New authorized callers: ", addedAddresses);
   console.log("Removed authorized callers: ", removedAddresses);
 
-  if (config.execute) {
-    if (addedAddresses.length !== 0) {
-      await proposeTransactions(
-        addedAddresses.map((address) => ({
-          to: ondoGMSwapProxy,
-          data: ondoGMSwapContract.interface.encodeFunctionData("setAuthorizedCaller", [address, true]),
-          value: "0",
-        })),
-        "OndoGMSwap - Add authorized callers",
-        config,
-        addresses,
-      );
-    }
+  // One proposal for the whole diff: swapping a caller out for another is then atomic, so there is no
+  // nonce in between where the outgoing one is already revoked and the incoming one is not yet live.
+  const transactions = [
+    ...addedAddresses.map((address) => [address, true] as const),
+    ...removedAddresses.map((address) => [address, false] as const),
+  ].map(([address, authorized]) => ({
+    to: ondoGMSwapProxy,
+    data: ondoGMSwapContract.interface.encodeFunctionData("setAuthorizedCaller", [address, authorized]),
+    value: "0",
+  }));
 
-    if (removedAddresses.length !== 0) {
-      await proposeTransactions(
-        removedAddresses.map((address) => ({
-          to: ondoGMSwapProxy,
-          data: ondoGMSwapContract.interface.encodeFunctionData("setAuthorizedCaller", [address, false]),
-          value: "0",
-        })),
-        "OndoGMSwap - Remove authorized callers",
-        config,
-        addresses,
-      );
-    }
+  if (transactions.length === 0) {
+    return console.log("Authorized callers already match the config: nothing to propose.");
+  }
+
+  if (config.execute) {
+    await proposeTransactions(transactions, "OndoGMSwap - Update authorized callers", config, addresses);
 
     versions[config.newTag].config.ondoGMSwap = { authorizedCallers: newAddresses };
   }

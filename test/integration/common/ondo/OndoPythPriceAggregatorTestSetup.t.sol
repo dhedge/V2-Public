@@ -5,11 +5,11 @@ pragma experimental ABIEncoderV2;
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
 import {IPyth} from "contracts/interfaces/pyth/IPyth.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 abstract contract OndoPythPriceAggregatorTestSetup is BackboneSetup {
   // --- Real mainnet contracts ---
   address public constant PYTH_CONTRACT = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
-  address public constant GM_TOKEN_MANAGER = 0x2c158BC456e027b2AfFCCadF1BDBD9f5fC4c5C8c;
   address public constant SVALUE_ORACLE = 0x9BC39DB6fbB44B91a48b8D5A6C208B82B1741bE6;
   address public constant NVDA_ON = 0x2D1F7226Bd1F780AF6B9A49DCC0aE00E8Df4bDEE;
 
@@ -46,7 +46,7 @@ abstract contract OndoPythPriceAggregatorTestSetup is BackboneSetup {
       "OndoPythPriceAggregator.sol:OndoPythPriceAggregator",
       abi.encode(
         PYTH_CONTRACT,
-        GM_TOKEN_MANAGER,
+        EthereumConfig.ONDO_GM_TOKEN_MANAGER,
         SVALUE_ORACLE,
         NVDA_ON,
         priceIds,
@@ -134,7 +134,9 @@ abstract contract OndoPythPriceAggregatorTestSetup is BackboneSetup {
   // ═══════════════════════════════════════════════════════════════════════
 
   function _getSanityCheckOracle() internal returns (address) {
-    (bool success, bytes memory data) = GM_TOKEN_MANAGER.call(abi.encodeWithSignature("sanityCheckOracle()"));
+    (bool success, bytes memory data) = EthereumConfig.ONDO_GM_TOKEN_MANAGER.call(
+      abi.encodeWithSignature("sanityCheckOracle()")
+    );
     require(success, "sanityCheckOracle() failed");
     return abi.decode(data, (address));
   }
@@ -153,7 +155,7 @@ abstract contract OndoPythPriceAggregatorTestSetup is BackboneSetup {
 
   function _mockMintingPaused(bool paused) internal {
     vm.mockCall(
-      GM_TOKEN_MANAGER,
+      EthereumConfig.ONDO_GM_TOKEN_MANAGER,
       abi.encodeWithSignature("gmTokenMintingPaused(address)", NVDA_ON),
       abi.encode(paused)
     );
@@ -161,7 +163,7 @@ abstract contract OndoPythPriceAggregatorTestSetup is BackboneSetup {
 
   function _mockRedemptionsPaused(bool paused) internal {
     vm.mockCall(
-      GM_TOKEN_MANAGER,
+      EthereumConfig.ONDO_GM_TOKEN_MANAGER,
       abi.encodeWithSignature("gmTokenRedemptionsPaused(address)", NVDA_ON),
       abi.encode(paused)
     );

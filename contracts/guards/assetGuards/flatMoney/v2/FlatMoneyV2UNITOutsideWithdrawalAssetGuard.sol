@@ -18,15 +18,17 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import {IERC20Extended} from "../../../../interfaces/IERC20Extended.sol";
 import {IHasAssetInfo} from "../../../../interfaces/IHasAssetInfo.sol";
 import {IHasSupportedAsset} from "../../../../interfaces/IHasSupportedAsset.sol";
 import {IPoolLogic} from "../../../../interfaces/IPoolLogic.sol";
+import {IAccountedTokenAssetGuard} from "../../../../interfaces/guards/IAccountedTokenAssetGuard.sol";
 import {IStableModuleV2} from "../../../../interfaces/flatMoney/v2/IStableModuleV2.sol";
 import {OutsidePositionWithdrawalHelper} from "../../OutsidePositionWithdrawalHelper.sol";
+import {NonDepositAssetGuard} from "../../shared/NonDepositAssetGuard.sol";
 import {FlatMoneyV2UNITAssetGuard} from "./FlatMoneyV2UNITAssetGuard.sol";
 
 /// @title Asset guard for FlatMoney V2 UNIT token with OutsidePositionWithdrawalHelper
@@ -36,8 +38,17 @@ import {FlatMoneyV2UNITAssetGuard} from "./FlatMoneyV2UNITAssetGuard.sol";
 /// @dev IMPORTANT: This guard's getBalance returns USD VALUE (18 decimals), not token balance.
 ///      This is required for OutsidePositionWithdrawalHelper to calculate withdrawal amounts correctly.
 ///      Set USDPriceAggregator for this asset type since getBalance already returns USD value.
-contract FlatMoneyV2UNITOutsideWithdrawalAssetGuard is OutsidePositionWithdrawalHelper, FlatMoneyV2UNITAssetGuard {
+contract FlatMoneyV2UNITOutsideWithdrawalAssetGuard is
+  OutsidePositionWithdrawalHelper,
+  FlatMoneyV2UNITAssetGuard,
+  NonDepositAssetGuard,
+  IAccountedTokenAssetGuard
+{
   using SafeMath for uint256;
+
+  /// @inheritdoc IAccountedTokenAssetGuard
+  // solhint-disable-next-line const-name-snakecase
+  bool public constant override isAccountedTokenAssetGuard = true;
 
   address public immutable collateral;
   uint256 public immutable collateralDecimals;
@@ -88,10 +99,22 @@ contract FlatMoneyV2UNITOutsideWithdrawalAssetGuard is OutsidePositionWithdrawal
     decimals = 18;
   }
 
-  function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) public view override {
-    require(!_asset.isDeposit, "deposit not supported");
+  /// @inheritdoc IAccountedTokenAssetGuard
+  /// @dev The UNIT balance is valued at the Flat Money NAV (`stableCollateralPerShare` × collateral price),
+  ///      while the registered asset oracle is the fixed `USDPriceAggregator` used only as a no-op multiplier
+  ///      for USD-denominated guard balances. Generic swap guards would price the UNIT at $1 per token through
+  ///      the slippage accumulator, so it must be unwound through the Flat Money guarded flow (delayed orders)
+  ///      instead of being sold through a router.
+  function isAccountedToken(address, address _asset, address _token) external pure override returns (bool accounted) {
+    accounted = _asset == _token;
+  }
 
-    super.addAssetCheck(_poolLogic, _asset);
+  function _addAssetCheck(
+    address _poolLogic,
+    IHasSupportedAsset.Asset calldata _asset
+  ) internal view override(FlatMoneyV2UNITAssetGuard, NonDepositAssetGuard) {
+    NonDepositAssetGuard._addAssetCheck(_poolLogic, _asset);
+    FlatMoneyV2UNITAssetGuard._addAssetCheck(_poolLogic, _asset);
   }
 
   /// @notice Withdrawal processing for UNIT asset using OutsidePositionWithdrawalHelper

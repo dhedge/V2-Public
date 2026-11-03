@@ -32,7 +32,9 @@
     "assetType": "40",
     "specificOracleConfig": {
       "spotIndex": 182,
-      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+      "referencePerpAssetId": 110003,
+      "maxDeviationBps": 300
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
   },
@@ -42,7 +44,9 @@
     "assetType": "40",
     "specificOracleConfig": {
       "spotIndex": 142,
-      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+      "referencePerpAssetId": 0,
+      "maxDeviationBps": 200
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
   },
@@ -52,7 +56,9 @@
     "assetType": "40",
     "specificOracleConfig": {
       "spotIndex": 151,
-      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+      "referencePerpAssetId": 1,
+      "maxDeviationBps": 200
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
   },
@@ -62,7 +68,9 @@
     "assetType": "40",
     "specificOracleConfig": {
       "spotIndex": 156,
-      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+      "referencePerpAssetId": 5,
+      "maxDeviationBps": 200
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
   },
@@ -72,7 +80,9 @@
     "assetType": "40",
     "specificOracleConfig": {
       "spotIndex": 107,
-      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+      "referencePerpAssetId": 159,
+      "maxDeviationBps": 300
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
   },
@@ -82,7 +92,9 @@
     "assetType": "40",
     "specificOracleConfig": {
       "spotIndex": 272,
-      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+      "referencePerpAssetId": 214,
+      "maxDeviationBps": 500
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
   },
@@ -92,7 +104,9 @@
     "assetType": "40",
     "specificOracleConfig": {
       "spotIndex": 188,
-      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+      "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+      "referencePerpAssetId": 200,
+      "maxDeviationBps": 300
     },
     "oracleType": "HyperliquidSpotPriceAggregator"
   }

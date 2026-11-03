@@ -5,12 +5,13 @@ pragma abicoder v2;
 // solhint-disable-next-line max-line-length
 import {EasySwapperV2CustomCooldownWhitelistTestSetup} from "test/integration/common/easySwapperV2/EasySwapperV2CustomCooldownWhitelistTestSetup.t.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract EasySwapperV2CustomCooldownWhitelistTestArbitrum is
   EasySwapperV2CustomCooldownWhitelistTestSetup,
   ArbitrumSetup
 {
-  constructor() EasySwapperV2CustomCooldownWhitelistTestSetup() ArbitrumSetup(489036888) {}
+  constructor() EasySwapperV2CustomCooldownWhitelistTestSetup() ArbitrumSetup(ForkBlocks.ARBITRUM) {}
 
   function setUp() public override(EasySwapperV2CustomCooldownWhitelistTestSetup, ArbitrumSetup) {
     super.setUp();

@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { TAssetConfig, IETHCrossAggregatorConfig } from "./oracleTypes";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { Address } from "../../../types";
 
 const validateAssetConfig = (oracleConfig: TAssetConfig): oracleConfig is IETHCrossAggregatorConfig => {

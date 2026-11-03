@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import {OndoPythPriceAggregatorTestSetup} from "test/integration/common/ondo/OndoPythPriceAggregatorTestSetup.t.sol";
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 contract OndoPythPriceAggregatorTestEthereum is OndoPythPriceAggregatorTestSetup, EthereumSetup {
   constructor() EthereumSetup(24820854) OndoPythPriceAggregatorTestSetup() {}
@@ -24,7 +25,7 @@ contract OndoPythPriceAggregatorTestEthereum is OndoPythPriceAggregatorTestSetup
 
     (bool s3, bytes memory d3) = aggregator.staticcall(abi.encodeWithSignature("gmTokenManager()"));
     require(s3);
-    assertEq(abi.decode(d3, (address)), GM_TOKEN_MANAGER);
+    assertEq(abi.decode(d3, (address)), EthereumConfig.ONDO_GM_TOKEN_MANAGER);
 
     (bool s4, bytes memory d4) = aggregator.staticcall(abi.encodeWithSignature("sValueOracle()"));
     require(s4);
@@ -55,7 +56,7 @@ contract OndoPythPriceAggregatorTestEthereum is OndoPythPriceAggregatorTestSetup
       "OndoPythPriceAggregator.sol:OndoPythPriceAggregator",
       abi.encode(
         address(0),
-        GM_TOKEN_MANAGER,
+        EthereumConfig.ONDO_GM_TOKEN_MANAGER,
         SVALUE_ORACLE,
         NVDA_ON,
         priceIds,
@@ -92,7 +93,7 @@ contract OndoPythPriceAggregatorTestEthereum is OndoPythPriceAggregatorTestSetup
       "OndoPythPriceAggregator.sol:OndoPythPriceAggregator",
       abi.encode(
         PYTH_CONTRACT,
-        GM_TOKEN_MANAGER,
+        EthereumConfig.ONDO_GM_TOKEN_MANAGER,
         SVALUE_ORACLE,
         NVDA_ON,
         priceIds,

@@ -1,7 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { tryVerify } from "../../../deploymentHelpers";
-import { Address, IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
-import { RouteHintStruct } from "../../../../types/DhedgeSuperSwapper";
+import { tryVerify } from "../../../helpers/verify";
+import { Address, IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions, RouteHintStruct } from "../../../types";
 
 export const superSwapperJob: IJob<void> = async (
   config: IUpgradeConfig,

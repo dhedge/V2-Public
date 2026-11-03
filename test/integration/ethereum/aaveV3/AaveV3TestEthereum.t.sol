@@ -5,11 +5,10 @@ pragma abicoder v2;
 import {AaveV3TestSetup} from "test/integration/common/aaveV3/AaveV3TestSetup.t.sol";
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3TestEthereum is AaveV3TestSetup, EthereumSetup {
-  uint256 private testForkBlockNumber = 23283702;
-
-  constructor() AaveV3TestSetup(_createAaveV3TestConfig()) EthereumSetup(testForkBlockNumber) {}
+  constructor() AaveV3TestSetup(_createAaveV3TestConfig()) EthereumSetup(ForkBlocks.ETHEREUM) {}
 
   function _createAaveV3TestConfig() internal pure returns (AaveV3TestSetup.AaveV3TestConfig memory config) {
     config.swapper = EthereumConfig.SWAPPER;

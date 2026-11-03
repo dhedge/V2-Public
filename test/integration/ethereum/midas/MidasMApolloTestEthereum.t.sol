@@ -4,11 +4,12 @@ pragma experimental ABIEncoderV2;
 
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
 import {MidasMApolloTestSetup} from "test/integration/common/midas/MidasMApolloTestSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @notice Ethereum mainnet fork binding for the Midas mAPOLLO integration test suite.
 contract MidasMApolloTestEthereum is MidasMApolloTestSetup, EthereumSetup {
   constructor()
-    EthereumSetup(25538718)
+    EthereumSetup(ForkBlocks.ETHEREUM)
     MidasMApolloTestSetup(
       MidasChainData({
         mToken: 0x7CF9DEC92ca9FD46f8d86e7798B72624Bc116C05, // mAPOLLO

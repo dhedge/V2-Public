@@ -126,12 +126,6 @@
     "oracleType": "ChainlinkAggregator"
   },
   {
-    "assetName": "Stablecoin Yield",
-    "assetAddress": "0xbae28251b2a4e621aa7e20538c06dee010bc06de",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
     "assetName": "Aavegotchi",
     "assetAddress": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
     "assetType": "4",
@@ -148,30 +142,6 @@
       "chainlinkOracleAddress": "0x10C8264C0935b3B9870013e057f330Ff3e9C56dC"
     },
     "oracleType": "ChainlinkAggregator"
-  },
-  {
-    "assetName": "Toros ETHBEAR2X",
-    "assetAddress": "0x027da30fadab6202801f97be344e2348a2a92842",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros ETHBULL3X",
-    "assetAddress": "0x460b60565cb73845d56564384ab84bf84c13e47d",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros BTCBEAR2X",
-    "assetAddress": "0x3dbce2c8303609c17aa23b69ebe83c2f5c510ada",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros BTCBULL3X",
-    "assetAddress": "0xdb88ab5b485b38edbeef866314f9e49d095bce39",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "MiMatic",
@@ -207,18 +177,6 @@
     "oracleType": "USDPriceAggregator"
   },
   {
-    "assetName": "Toros BTCBEAR1X",
-    "assetAddress": "0x86C3Dd18bAF4370495d9228b58fD959771285C55",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Toros ETHBEAR1X",
-    "assetAddress": "0x79D2aeFE6A21b26B024d9341A51f6b7897852499",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
     "assetName": "StraitsX Singapore Dollar",
     "assetAddress": "0x769434dcA303597C8fc4997Bf3DAB233e961Eda2",
     "assetType": "0",
@@ -243,24 +201,6 @@
     }
   },
   {
-    "assetName": "Polygon Bear 1x",
-    "assetAddress": "0x8987ca55e635d0d3ba9469ee31e9b8a7d447e9cc",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "Polygon Bull 2x",
-    "assetAddress": "0x7dab035a8a65f7d33f1628a450c6780323d3c5e1",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
-    "assetName": "USD Market Neutral Yield",
-    "assetAddress": "0xc4c6333afdd510066786e0d257eb91095fd729e3",
-    "assetType": "0",
-    "oracleType": "DHedgePoolAggregator"
-  },
-  {
     "assetName": "Pax Gold",
     "assetAddress": "0x553d3D295e0f695B9228246232eDF400ed3560B5",
     "assetType": "0",
@@ -270,18 +210,6 @@
     "oracleType": "ChainlinkAggregator"
   },
   {
-    "assetName": "Lido DAO Token (LDO)",
-    "assetAddress": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
-    "assetType": "0",
-    "oracleType": "UniV3TWAPAggregator",
-    "specificOracleConfig": {
-      "pool": "0xda908C0bf14AD0B61Ea5eBe671aC59B2cE091cBf",
-      "mainToken": "0xC3C7d422809852031b44ab29EEC9F1EfF2A58756",
-      "pairTokenUsdAggregator": "0xF9680D99D6C9589e2a93a78A04A279e509205945",
-      "updateInterval": 1800
-    }
-  },
-  {
     "assetName": "USDC Native",
     "assetAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
     "assetType": "4",
@@ -289,14 +217,5 @@
       "chainlinkOracleAddress": "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7"
     },
     "oracleType": "ChainlinkAggregator"
-  },
-  {
-    "assetName": "EasySwapperV2 Unrolled Assets",
-    "assetAddress": "0x45b90480D6F643dE2f128db091A357C3c90399f2",
-    "assetType": "30",
-    "oracleType": "USDPriceAggregator",
-    "specificOracleConfig": {
-      "USDPriceOracleAddress": "0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51"
-    }
   }
 ]

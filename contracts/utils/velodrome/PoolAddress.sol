@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 
 import {IVelodromeCLFactory} from "../../interfaces/velodrome/IVelodromeCLFactory.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {Clones} from "@openzeppelin/v3/contracts/proxy/Clones.sol";
 
 /// @title Provides functions for deriving a pool address from the factory, tokens, and the fee
 library PoolAddress {

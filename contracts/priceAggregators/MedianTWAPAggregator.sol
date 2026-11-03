@@ -2,12 +2,12 @@
 
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/v3/contracts/access/Ownable.sol";
+import "@openzeppelin/v3/contracts/utils/Pausable.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/SafeERC20.sol";
 import "../utils/uniswap/libraries/legacy/FixedPoint.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";

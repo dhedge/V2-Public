@@ -2,6 +2,8 @@
 pragma solidity >=0.7.6;
 pragma abicoder v2;
 
+import {ISlippageAccumulator} from "../ISlippageAccumulator.sol";
+
 interface IHyperliquidCoreWriterContractGuard {
   /////////////////////////////////////////////
   //             Enums & Structs             //
@@ -56,6 +58,7 @@ interface IHyperliquidCoreWriterContractGuard {
   function getApprovedDexIds() external view returns (uint256[] memory);
   function isEnabledDexId(uint256 dexId) external view returns (bool);
   function withdrawalManager() external view returns (address);
+  function slippageAccumulator() external view returns (ISlippageAccumulator);
 
   // Admin functions
   function setMaxPermittedSlippage(uint64 maxSlippage) external;

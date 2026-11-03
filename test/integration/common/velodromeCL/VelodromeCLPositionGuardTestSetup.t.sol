@@ -19,7 +19,7 @@ abstract contract VelodromeCLPositionGuardTestSetup is VelodromeCLTestSetup {
     (int24 lower, int24 upper) = _tickRange(1);
 
     vm.prank(manager);
-    vm.expectRevert("velodrome cl asset not enabled");
+    vm.expectRevert("cl asset not enabled");
     fund.execTransaction(
       cl.nonfungiblePositionManager,
       _mintCalldata(cl.token0, cl.token1, lower, upper, address(fund))
@@ -115,6 +115,29 @@ abstract contract VelodromeCLPositionGuardTestSetup is VelodromeCLTestSetup {
     (, , , , , , , uint128 liquidityAfter, , , , ) = nftManager.positions(tokenId);
     assertGt(uint256(liquidityAfter), uint256(liquidityBefore));
     assertApproxEqRel(fundManagerLogic.totalFundValue(), valueBefore, 0.01e18);
+  }
+
+  /// @dev An emptied position stays tracked, so the position asset can be dropped from the vault
+  /// while the NFT still exists. Increasing liquidity on it afterwards would move vault tokens into
+  /// a position nothing values.
+  function test_revert_increasing_liquidity_when_the_position_asset_is_not_enabled() public {
+    _enableNftPosition();
+    uint256 tokenId = _mintAsPool(1);
+    _decreaseAllLiquidity(tokenId);
+    _managerExec(cl.nonfungiblePositionManager, _collectCalldata(tokenId, address(fund)));
+
+    vm.prank(manager);
+    fundManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), _toArray(cl.nonfungiblePositionManager));
+    assertFalse(fundManagerLogic.isSupportedAsset(cl.nonfungiblePositionManager));
+    assertEq(_trackedTokenIds().length, 1);
+
+    uint256 valueBefore = fundManagerLogic.totalFundValue();
+
+    vm.prank(manager);
+    vm.expectRevert("cl asset not enabled");
+    fund.execTransaction(cl.nonfungiblePositionManager, _increaseCalldata(tokenId));
+
+    assertEq(fundManagerLogic.totalFundValue(), valueBefore);
   }
 
   function test_decreasing_liquidity_to_zero_preserves_value_and_price() public {

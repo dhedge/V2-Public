@@ -1,6 +1,5 @@
-import { CrossChainBridgeStruct } from "../types/AcrossContractGuard";
 import { ChainId } from "./chainIds";
-import { Address } from "./types";
+import { Address, CrossChainBridgeStruct } from "./types";
 import { assets as arbitrumAssets, gmxTestVaults } from "./arbitrum/deploymentData";
 import { assets as baseAssets, FLAT_MONEY_PERP_MARKET_BOT_TEST } from "./base/deploymentData";
 import { assets as ethereumAssets, ondoHyperliquidMarketMaking as ondoVaults } from "./ethereum/deploymentData";

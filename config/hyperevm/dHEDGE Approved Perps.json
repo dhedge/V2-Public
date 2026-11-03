@@ -10,6 +10,11 @@
     "approved": true
   },
   {
+    "perpName": "ATOM",
+    "assetId": 2,
+    "approved": true
+  },
+  {
     "perpName": "SOL",
     "assetId": 5,
     "approved": true
@@ -25,13 +30,28 @@
     "approved": true
   },
   {
+    "perpName": "OP",
+    "assetId": 9,
+    "approved": true
+  },
+  {
     "perpName": "LTC",
     "assetId": 10,
     "approved": true
   },
   {
+    "perpName": "ARB",
+    "assetId": 11,
+    "approved": true
+  },
+  {
     "perpName": "DOGE",
     "assetId": 12,
+    "approved": true
+  },
+  {
+    "perpName": "INJ",
+    "assetId": 13,
     "approved": true
   },
   {
@@ -50,13 +70,28 @@
     "approved": true
   },
   {
+    "perpName": "LDO",
+    "assetId": 17,
+    "approved": true
+  },
+  {
     "perpName": "LINK",
     "assetId": 18,
     "approved": true
   },
   {
+    "perpName": "STX",
+    "assetId": 19,
+    "approved": true
+  },
+  {
     "perpName": "XRP",
     "assetId": 25,
+    "approved": true
+  },
+  {
+    "perpName": "BCH",
+    "assetId": 26,
     "approved": true
   },
   {
@@ -67,6 +102,11 @@
   {
     "perpName": "AAVE",
     "assetId": 28,
+    "approved": true
+  },
+  {
+    "perpName": "COMP",
+    "assetId": 29,
     "approved": true
   },
   {
@@ -90,8 +130,28 @@
     "approved": true
   },
   {
+    "perpName": "SEI",
+    "assetId": 40,
+    "approved": true
+  },
+  {
+    "perpName": "RUNE",
+    "assetId": 41,
+    "approved": true
+  },
+  {
+    "perpName": "ZRO",
+    "assetId": 46,
+    "approved": true
+  },
+  {
     "perpName": "DOT",
     "assetId": 48,
+    "approved": true
+  },
+  {
+    "perpName": "TIA",
+    "assetId": 63,
     "approved": true
   },
   {
@@ -100,8 +160,48 @@
     "approved": true
   },
   {
+    "perpName": "PENDLE",
+    "assetId": 70,
+    "approved": true
+  },
+  {
+    "perpName": "FET",
+    "assetId": 72,
+    "approved": true
+  },
+  {
     "perpName": "NEAR",
     "assetId": 74,
+    "approved": true
+  },
+  {
+    "perpName": "FIL",
+    "assetId": 80,
+    "approved": true
+  },
+  {
+    "perpName": "kBONK",
+    "assetId": 85,
+    "approved": true
+  },
+  {
+    "perpName": "JUP",
+    "assetId": 90,
+    "approved": true
+  },
+  {
+    "perpName": "JTO",
+    "assetId": 94,
+    "approved": true
+  },
+  {
+    "perpName": "WIF",
+    "assetId": 98,
+    "approved": true
+  },
+  {
+    "perpName": "ETC",
+    "assetId": 102,
     "approved": true
   },
   {
@@ -110,8 +210,23 @@
     "approved": true
   },
   {
+    "perpName": "STRK",
+    "assetId": 113,
+    "approved": true
+  },
+  {
     "perpName": "TAO",
     "assetId": 116,
+    "approved": true
+  },
+  {
+    "perpName": "AR",
+    "assetId": 117,
+    "approved": true
+  },
+  {
+    "perpName": "ETHFI",
+    "assetId": 121,
     "approved": true
   },
   {
@@ -120,13 +235,73 @@
     "approved": true
   },
   {
+    "perpName": "EIGEN",
+    "assetId": 130,
+    "approved": true
+  },
+  {
+    "perpName": "RENDER",
+    "assetId": 140,
+    "approved": true
+  },
+  {
+    "perpName": "POL",
+    "assetId": 142,
+    "approved": true
+  },
+  {
+    "perpName": "XLM",
+    "assetId": 154,
+    "approved": true
+  },
+  {
+    "perpName": "SAND",
+    "assetId": 156,
+    "approved": true
+  },
+  {
+    "perpName": "IOTA",
+    "assetId": 157,
+    "approved": true
+  },
+  {
+    "perpName": "ALGO",
+    "assetId": 158,
+    "approved": true
+  },
+  {
     "perpName": "HYPE",
     "assetId": 159,
     "approved": true
   },
   {
+    "perpName": "VIRTUAL",
+    "assetId": 162,
+    "approved": true
+  },
+  {
+    "perpName": "PENGU",
+    "assetId": 163,
+    "approved": true
+  },
+  {
     "perpName": "FARTCOIN",
     "assetId": 165,
+    "approved": true
+  },
+  {
+    "perpName": "SPX",
+    "assetId": 171,
+    "approved": true
+  },
+  {
+    "perpName": "MORPHO",
+    "assetId": 173,
+    "approved": true
+  },
+  {
+    "perpName": "TRUMP",
+    "assetId": 174,
     "approved": true
   },
   {
@@ -165,6 +340,16 @@
     "approved": true
   },
   {
+    "perpName": "ICP",
+    "assetId": 219,
+    "approved": true
+  },
+  {
+    "perpName": "AERO",
+    "assetId": 220,
+    "approved": true
+  },
+  {
     "perpName": "LIT",
     "assetId": 223,
     "approved": true
@@ -172,6 +357,16 @@
   {
     "perpName": "XMR",
     "assetId": 224,
+    "approved": true
+  },
+  {
+    "perpName": "DASH",
+    "assetId": 226,
+    "approved": true
+  },
+  {
+    "perpName": "GRAM",
+    "assetId": 230,
     "approved": true
   },
   {

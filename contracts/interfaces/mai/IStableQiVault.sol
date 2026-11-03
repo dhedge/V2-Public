@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/v3/contracts/token/ERC721/IERC721.sol";
 
 // Not OS AFAIK - Taken from https://optimistic.etherscan.io/address/0xbf1aea8670d2528e08334083616dd9c5f3b087ae#code
 interface IStableQiVault is IERC721 {

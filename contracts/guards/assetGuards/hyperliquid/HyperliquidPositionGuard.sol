@@ -3,12 +3,11 @@ pragma solidity 0.8.28;
 
 import {HyperliquidCoreDepositWalletContractGuard} from "../../contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol";
 import {IAssetGuard} from "../../../interfaces/guards/IAssetGuard.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
-import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {IHyperliquidCoreWriterContractGuard} from "../../../interfaces/hyperliquid/IHyperliquidCoreWriterContractGuard.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
 import {OutsidePositionWithdrawalHelper} from "../OutsidePositionWithdrawalHelper.sol";
+import {NonDepositAssetGuard} from "../shared/NonDepositAssetGuard.sol";
 import {PrecompileHelper} from "../../../utils/hyperliquid/PrecompileHelper.sol";
 
 /// @title Hyperliquid Position asset guard
@@ -18,27 +17,10 @@ import {PrecompileHelper} from "../../../utils/hyperliquid/PrecompileHelper.sol"
 /// @dev AssetType = 39
 contract HyperliquidPositionGuard is
   IAssetGuard,
-  IAddAssetCheckGuard,
+  NonDepositAssetGuard,
   PrecompileHelper,
   OutsidePositionWithdrawalHelper
 {
-  /// @notice Indicates the pool using this guard should call `addAssetCheck` before adding an asset.
-  // solhint-disable-next-line const-name-snakecase
-  bool public constant override isAddAssetCheckGuard = true;
-
-  /// @notice Rejects marking the Hyperliquid position asset as a deposit asset.
-  /// @dev This asset is the CoreWriter address, a Hyperliquid system contract standing in for the pool's
-  ///      HyperCore account — not a token anyone can transfer in. Depositing it is meaningless, yet
-  ///      `assetValue` prices it (getBalance is USDC-denominated), so a deposit that reached the mint
-  ///      would credit real value for nothing. Today `PoolLogic._depositFor`'s `transferFrom` reverts
-  ///      because CoreWriter implements no such function, but that is an accident of an external
-  ///      contract's ABI rather than a guarantee, so assert it here — matching
-  ///      `GmxPerpMarketAssetGuard` and `HyperliquidSpotGuard`, which reject deposit assets the same way.
-  /// @param asset The asset being added, including its `isDeposit` flag.
-  function addAssetCheck(address, IHasSupportedAsset.Asset calldata asset) external view override {
-    require(!asset.isDeposit, "deposit not supported");
-  }
-
   /// @notice Calculates the amount to withdraw to the user when the pool has an active account on Hyperliquid.
   /// @dev The position value (getBalance) is denominated in USDC, so the payout is always USDC.
   /// @dev Includes compensation for decreased USDC balance when other guards withdraw proportionally.
@@ -105,17 +87,12 @@ contract HyperliquidPositionGuard is
     }
   }
 
-  /// @notice Checks that the total value of Hyperliquid positions for `pool` is zero.
-  /// @dev This is to ensure that the manager of `pool` cannot remove the asset guard while it still
-  ///      has an open position on Hyperliquid.
-  /// @dev We also disallow removal of the asset guard if a spot asset action (bridging/trading) has been
-  ///      performed within the contract guard's spot-action lock window (see `hasPerformedSpotAction`).
-  /// @param pool PoolLogic address.
-  function removeAssetCheck(address pool, address) external view override {
-    IHyperliquidCoreWriterContractGuard contractGuard = _useContractGuard(IPoolLogic(pool).factory());
-
-    require(getBalance(pool, address(0)) == 0, "account value !0");
-    require(!contractGuard.hasPerformedSpotAction(pool), "spot asset action performed");
+  /// @notice The Hyperliquid position asset can never be removed once added.
+  /// @dev It is the only valuer of the pool's HyperCore account (Core USDC and perp equity). Value can reach
+  ///      that account without being visible at removal time, e.g. from a resting spot sell that fills
+  ///      later, so a zero balance at removal does not prove nothing more will arrive.
+  function removeAssetCheck(address, address) external pure override {
+    revert("cannot remove HL core asset");
   }
 
   /// @notice Returns the decimals related to the account value of the Hyperliquid positions.

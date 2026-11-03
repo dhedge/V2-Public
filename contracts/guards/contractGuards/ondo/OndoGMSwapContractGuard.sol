@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IGMTokenManager} from "../../../interfaces/ondo/IGMTokenManager.sol";
 import {IOndoAttestationOracle} from "../../../interfaces/ondo/IOndoAttestationOracle.sol";

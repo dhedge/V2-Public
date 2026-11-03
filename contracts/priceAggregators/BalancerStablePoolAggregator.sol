@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/balancer/IBalancerPool.sol";

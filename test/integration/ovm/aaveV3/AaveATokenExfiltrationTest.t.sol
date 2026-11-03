@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/v3/contracts/token/ERC20/ERC20.sol";
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
@@ -25,6 +25,7 @@ import {MockSwapExecutor} from "test/integration/common/oneInch/MockSwapExecutor
 import {OptimismSetup} from "test/integration/utils/foundry/chains/OptimismSetup.t.sol";
 import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @notice Regression tests: aTokens are valued via the Aave umbrella asset but are unregistered, so a
 ///         manager could swap them out for dust. The fix refuses a source token an asset guard accounts for
@@ -51,7 +52,7 @@ contract AaveATokenExfiltrationTest is OptimismSetup {
   address public aWeth;
   address public thief = makeAddr("thief");
 
-  constructor() OptimismSetup(155959582) {}
+  constructor() OptimismSetup(ForkBlocks.OPTIMISM) {}
 
   function setUp() public override {
     super.setUp();

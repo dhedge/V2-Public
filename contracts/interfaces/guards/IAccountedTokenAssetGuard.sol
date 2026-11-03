@@ -2,15 +2,18 @@
 
 pragma solidity >=0.7.6;
 
-/// @notice Optional asset guard capability: declares receipt tokens the guard already values.
-/// @dev For guards valuing a position via receipt tokens the pool holds (e.g. aToken balances) instead of
-///      the supported asset's own balance. Such receipts are unregistered, so `isSupportedAsset` checks
-///      miss them; swap guards use this to refuse selling them.
+/// @notice Optional asset guard capability: declares tokens that must not be sold through generic swap guards.
+/// @dev Covers both unsupported receipt tokens valued through a supported umbrella asset (e.g. Aave aTokens)
+///      and supported tokens whose value is incorporated into a composite position (e.g. GMX market tokens).
+///      These tokens must be unwound through their protocol-specific guarded flow so their value is measured
+///      correctly.
 interface IAccountedTokenAssetGuard {
   /// @notice Capability flag, probed before `isAccountedToken`.
   function isAccountedTokenAssetGuard() external view returns (bool);
 
-  /// @param asset The supported (umbrella) asset this guard is registered for.
-  /// @return accounted True if `token`'s value is already counted by this guard for `pool`.
+  /// @param pool The pool whose position is being checked.
+  /// @param asset The supported asset this guard is registered for.
+  /// @param token The proposed generic swap source token.
+  /// @return accounted True if `token` is accounted for by this guard and must be unwound through its protocol.
   function isAccountedToken(address pool, address asset, address token) external view returns (bool accounted);
 }

@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 import { IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses } from "../../../types";
 
 export const ondoGMSwapContractGuardJob: IJob<void> = async (

@@ -300,6 +300,7 @@ LPing: ClearingHouse.sol
 -- For people to be able to trade into the liquidity pools via the ClearingHouse the pool must maintain
 a minimum amount of liquidity. This mitigates people manipulating the lp price?
 --
+
 -- Create an LP
 -- Creating out of range lp
 -- Close a portion of an LP

@@ -18,7 +18,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
 import {ISwapDataConsumingGuard} from "../../interfaces/guards/ISwapDataConsumingGuard.sol";
@@ -100,6 +100,8 @@ contract EasySwapperV2ContractGuard is TxDataUtils, ITransactionTypes, SlippageA
         IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(address(swapData.srcData.token)),
         "unsupported source asset"
       );
+
+      _beforeSwapSourceGuard(_poolManagerLogic, address(swapData.srcData.token));
 
       intermediateSwapData = SlippageAccumulator.SwapData({
         srcAsset: address(swapData.srcData.token),

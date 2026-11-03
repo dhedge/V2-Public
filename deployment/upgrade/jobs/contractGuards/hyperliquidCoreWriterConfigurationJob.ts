@@ -1,6 +1,6 @@
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { MetaTransactionData, proposeTransactions } from "../../../deploymentHelpers";
+import { MetaTransactionData, proposeTransactions } from "../../../helpers/safe";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 // HIP-3 asset IDs start at 100_000. DexId = (assetId - 100_000) / 10_000.

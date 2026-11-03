@@ -1,7 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../types";
+import { OZ_V3_INITIALIZER_KINDS } from "../../helpers/upgradeValidation";
 
 export const assetHandlerJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -21,7 +23,9 @@ export const assetHandlerJob: IJob<void> = async (
       console.log("Will upgrade assethandler");
       const oldAssetHandler = versions[config.oldTag].contracts.AssetHandlerProxy;
       const AssetHandler = await ethers.getContractFactory("AssetHandler");
-      const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler);
+      const assetHandler = await upgrades.prepareUpgrade(oldAssetHandler, AssetHandler, {
+        unsafeAllow: OZ_V3_INITIALIZER_KINDS,
+      });
       console.log("assetHandler logic deployed to: ", assetHandler);
 
       await tryVerify(hre, assetHandler, "contracts/priceAggregators/AssetHandler.sol:AssetHandler", []);
@@ -49,7 +53,9 @@ export const assetHandlerJob: IJob<void> = async (
       }
 
       const AssetHandlerLogic = await ethers.getContractFactory("AssetHandler");
-      const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [[]]);
+      const assetHandler = await upgrades.deployProxy(AssetHandlerLogic, [[]], {
+        unsafeAllow: OZ_V3_INITIALIZER_KINDS,
+      });
       await assetHandler.deployed();
       console.log("AssetHandler deployed at ", assetHandler.address);
 

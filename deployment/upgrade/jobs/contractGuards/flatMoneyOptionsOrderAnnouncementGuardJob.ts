@@ -1,7 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 
 export const flatMoneyOptionsOrderAnnouncementGuardJob: IJob<void> = async (
   config: IUpgradeConfig,

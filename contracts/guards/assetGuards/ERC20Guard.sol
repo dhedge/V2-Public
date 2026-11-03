@@ -18,8 +18,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import {TxDataUtils} from "../../utils/TxDataUtils.sol";
 import {IAssetGuard} from "../../interfaces/guards/IAssetGuard.sol";
@@ -67,12 +67,17 @@ contract ERC20Guard is TxDataUtils, IGuard, IAssetGuard, ITransactionTypes {
   ) external view virtual override returns (uint16 txType, bool) {
     bytes4 method = getMethod(data);
 
-    if (method == bytes4(keccak256("approve(address,uint256)"))) {
-      address spender = convert32toAddress(getInput(data, 0));
+    if (method == IERC20.approve.selector) {
+      (address spender, uint256 amount) = abi.decode(getParams(data), (address, uint256));
 
-      address factory = IPoolManagerLogic(poolManagerLogic).factory();
-      address spenderGuard = IHasGuardInfo(factory).getContractGuard(spender);
-      require(spenderGuard != address(0) && spenderGuard != address(this), "unsupported spender approval"); // checks that the spender is an approved address
+      // amount == 0 skips the spender check so ERC20 allowances to deprecated contracts can be revoked.
+      // On an ERC721 `to` the second argument is a tokenId, so this also approves any spender for token #0.
+      // No valued ERC721 routed to this guard can have token #0.
+      if (amount > 0) {
+        address factory = IPoolManagerLogic(poolManagerLogic).factory();
+        address spenderGuard = IHasGuardInfo(factory).getContractGuard(spender);
+        require(spenderGuard != address(0), "unsupported spender approval");
+      }
 
       txType = uint16(TransactionType.Approve);
     }

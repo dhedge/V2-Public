@@ -4,11 +4,13 @@ pragma abicoder v2;
 
 import {SuperSwapperTest} from "test/integration/common/superSwapper/SuperSwapperTest.t.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract SuperSwapperTestEthereum is SuperSwapperTest {
   constructor()
     SuperSwapperTest(
       "ethereum",
+      ForkBlocks.ETHEREUM,
       EthereumConfig.UNISWAP_V3_FACTORY,
       EthereumConfig.UNISWAP_V3_ROUTER,
       _getV2Routers(),

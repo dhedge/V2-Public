@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTransactions } from "../../../deploymentHelpers";
+import { proposeTransactions } from "../../../helpers/safe";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 export const poolLimitOrderManagerConfigurationJob: IJob<void> = async (

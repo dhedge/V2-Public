@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 export const ondoAttestationOracleConfigurationJob: IJob<void> = async (

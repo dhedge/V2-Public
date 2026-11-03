@@ -3,8 +3,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import {IPoolFactory} from "../interfaces/IPoolFactory.sol";
 import {IPoolManagerLogic} from "../interfaces/IPoolManagerLogic.sol";
@@ -64,20 +64,26 @@ abstract contract SlippageAccumulatorUser is ITxTrackingGuard {
     }
   }
 
-  /// @dev Swap guards MUST call this in `txGuard` with the swap's source asset. For an unsupported source
-  ///      (which the `SlippageAccumulator` cannot price) it forbids selling an already-accounted token and
-  ///      snapshots total fund value for the net-value check in `afterTxGuard`.
+  /// @dev Swap guards MUST call this in `txGuard` with the swap's source asset. For an unsupported source,
+  ///      it checks every supported asset guard and snapshots total fund value for the net-value check in
+  ///      `afterTxGuard`. For a supported source, it checks its own asset guard in case the token is valued
+  ///      as part of a composite position and must be unwound through its protocol.
   function _beforeSwapSourceGuard(address poolManagerLogic, address srcAsset) internal virtual {
     if (!IHasSupportedAsset(poolManagerLogic).isSupportedAsset(srcAsset)) {
       _requireSrcNotAccounted(poolManagerLogic, srcAsset);
       intermediateTotalValueBefore = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+    } else {
+      _requireNotAccountedByAssetGuard(
+        IHasGuardInfo(slippageAccumulator.poolFactory()).getAssetGuard(srcAsset),
+        IPoolManagerLogic(poolManagerLogic).poolLogic(),
+        srcAsset,
+        srcAsset
+      );
     }
   }
 
-  /// @dev Forbids selling a token already counted by an "umbrella" asset guard (e.g. an Aave aToken); such
-  ///      positions must be unwound through their protocol. Protocol-agnostic: guards declare their own
-  ///      receipts via `IAccountedTokenAssetGuard`, so a new integration needs no change here. Same
-  ///      capability probe as `PoolManagerLogic._addAsset`, via `staticcall` as this is a view.
+  /// @dev For an unsupported source, checks every supported asset guard because the source may be accounted
+  ///      for by an umbrella position (e.g. an Aave aToken).
   function _requireSrcNotAccounted(address poolManagerLogic, address srcAsset) internal view {
     address factory = slippageAccumulator.poolFactory();
     address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
@@ -86,19 +92,30 @@ abstract contract SlippageAccumulatorUser is ITxTrackingGuard {
     for (uint256 i; i < supportedAssets.length; ++i) {
       address assetGuard = IHasGuardInfo(factory).getAssetGuard(supportedAssets[i].asset);
 
-      if (assetGuard == address(0)) continue;
+      _requireNotAccountedByAssetGuard(assetGuard, poolLogic, supportedAssets[i].asset, srcAsset);
+    }
+  }
 
-      // solhint-disable-next-line avoid-low-level-calls
-      (bool hasFunction, bytes memory answer) = assetGuard.staticcall(
-        abi.encodeWithSignature("isAccountedTokenAssetGuard()")
+  /// @dev Probes an asset guard for the optional `IAccountedTokenAssetGuard` capability and forbids the
+  ///      source when the guard declares that its value is already included in the guarded position.
+  function _requireNotAccountedByAssetGuard(
+    address assetGuard,
+    address poolLogic,
+    address accountedAsset,
+    address srcAsset
+  ) private view {
+    if (assetGuard == address(0)) return;
+
+    // solhint-disable-next-line avoid-low-level-calls
+    (bool hasFunction, bytes memory answer) = assetGuard.staticcall(
+      abi.encodeWithSignature("isAccountedTokenAssetGuard()")
+    );
+
+    if (hasFunction && answer.length == 32 && abi.decode(answer, (bool))) {
+      require(
+        !IAccountedTokenAssetGuard(assetGuard).isAccountedToken(poolLogic, accountedAsset, srcAsset),
+        "accounted token source"
       );
-
-      if (hasFunction && answer.length == 32 && abi.decode(answer, (bool))) {
-        require(
-          !IAccountedTokenAssetGuard(assetGuard).isAccountedToken(poolLogic, supportedAssets[i].asset, srcAsset),
-          "accounted token source"
-        );
-      }
     }
   }
 

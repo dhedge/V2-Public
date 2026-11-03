@@ -7,5 +7,17 @@
   },
   "lib/openzeppelin-contracts-upgradeable": {
     "rev": "fa525310e45f91eb20a6d3baa2644be8e0adba31"
+  },
+  "lib/openzeppelin-contracts-upgradeable-v3": {
+    "tag": {
+      "name": "v3.4.2-solc-0.7",
+      "rev": "e0683346f70db930bd39551046b12449ea68f2dc"
+    }
+  },
+  "lib/openzeppelin-contracts-v3": {
+    "tag": {
+      "name": "v3.4.2-solc-0.7",
+      "rev": "04695aecbd4d17dddfd55de766d10e3805d6f42f"
+    }
   }
 }

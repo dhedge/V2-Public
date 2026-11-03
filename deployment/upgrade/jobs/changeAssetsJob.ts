@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames } from "../../types";
-import { proposeTransactions } from "../../deploymentHelpers";
-import type { MetaTransactionData } from "../../deploymentHelpers";
+import { proposeTransactions } from "../../helpers/safe";
+import type { MetaTransactionData } from "../../helpers/safe";
 
 const VAULTS_TO_REMOVE_FROM: string[] = [];
 

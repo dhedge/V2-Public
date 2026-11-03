@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTx, proposeTransactions, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx, proposeTransactions } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 /// Set to true to remove the previous EasyLimitBuyManager from custom cooldown whitelist before adding the new one

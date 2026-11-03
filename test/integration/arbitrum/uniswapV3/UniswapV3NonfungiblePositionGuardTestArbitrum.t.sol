@@ -6,6 +6,7 @@ pragma abicoder v2;
 import {UniswapV3NonfungiblePositionGuardTestSetup} from "test/integration/common/uniswapV3/UniswapV3NonfungiblePositionGuardTestSetup.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @notice Runs the UniswapV3NonfungiblePositionGuard suite against an Arbitrum fork. This suite
 /// starts with the position NFT not yet enabled on the vault, so it needs its own vault and cannot
@@ -17,7 +18,7 @@ contract UniswapV3NonfungiblePositionGuardTestArbitrum is UniswapV3NonfungiblePo
       ArbitrumConfig.UNISWAP_V3_FACTORY,
       500
     )
-    ArbitrumSetup(489036888)
+    ArbitrumSetup(ForkBlocks.ARBITRUM)
   {}
 
   function setUp() public override(UniswapV3NonfungiblePositionGuardTestSetup, ArbitrumSetup) {

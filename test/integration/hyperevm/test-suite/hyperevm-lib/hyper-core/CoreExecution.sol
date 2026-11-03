@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.6 <0.9.0;
+pragma solidity 0.8.28;
 
-import {SafeCast} from "@openzeppelin/v5/contracts/utils/math/SafeCast.sol";
-import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/EnumerableSet.sol";
-import {DoubleEndedQueue} from "@openzeppelin/v5/contracts/utils/structs/DoubleEndedQueue.sol";
-import {Heap} from "@openzeppelin/v5/contracts/utils/structs/Heap.sol";
-import {IERC20} from "@openzeppelin/v5/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/v5/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
+import {Heap} from "@openzeppelin/contracts/utils/structs/Heap.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {PrecompileLib} from "../lib/PrecompileLib.sol";
 import {CoreWriterLib, HLConstants} from "../lib/CoreWriterLib.sol";
 import {HLConversions} from "../lib/HLConversions.sol";
@@ -580,6 +580,10 @@ contract CoreExecution is CoreView {
 
   function setMarkPx(uint32 perp, uint64 markPx) public {
     _perpMarkPrice[perp] = markPx;
+  }
+
+  function setOraclePx(uint32 perp, uint64 oraclePx) public {
+    _perpOraclePrice[perp] = oraclePx;
   }
 
   function setSpotPx(uint32 spotMarketId, uint64 priceDiffBps, bool isIncrease) public {

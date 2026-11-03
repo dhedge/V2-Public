@@ -17,9 +17,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {Math} from "@openzeppelin/contracts/math/Math.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {Math} from "@openzeppelin/v3/contracts/math/Math.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
 
 import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
 import {IERC721VerifyingGuard} from "../../../interfaces/guards/IERC721VerifyingGuard.sol";

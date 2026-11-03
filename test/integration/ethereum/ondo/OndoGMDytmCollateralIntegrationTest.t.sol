@@ -12,6 +12,7 @@ import {DytmParamStructs} from "contracts/utils/dytm/DytmParamStructs.sol";
 import {IDytmOffice} from "contracts/interfaces/dytm/IDytmOffice.sol";
 import {IDytmPeriphery} from "contracts/interfaces/dytm/IDytmPeriphery.sol";
 import {IOndoGMSwap} from "contracts/interfaces/ondo/IOndoGMSwap.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
 import {OndoDytmCollateralIntegrationTestSetup} from "test/integration/common/dytm/OndoDytmCollateralIntegrationTestSetup.t.sol";
 
@@ -21,7 +22,6 @@ import {OndoDytmCollateralIntegrationTestSetup} from "test/integration/common/dy
 library OndoDytmEthereumSharedData {
   uint256 internal constant FORK_BLOCK_NUMBER = 25452351;
 
-  address internal constant DYTM_OFFICE = 0x0ff1ceB93DbADfB13722058D60c4B8cD122b06ea;
   address internal constant DYTM_PERIPHERY = 0xfA03F9Ce907006133a0E77796a31c40AC22151d5;
   address internal constant DYTM_ACCOUNT_SPLITTER_AND_MERGER = 0x2439089A93eedc9f7fFfbc8CD32b85143D0E591C;
   address internal constant SPYON = 0xFeDC5f4a6c38211c1338aa411018DFAf26612c08;
@@ -49,7 +49,7 @@ contract OndoGMDytmCollateralIntegrationTest is OndoDytmCollateralIntegrationTes
   {}
 
   function _createConfig() internal pure returns (OndoDytmConfig memory config) {
-    config.dytmOffice = OndoDytmEthereumSharedData.DYTM_OFFICE;
+    config.dytmOffice = EthereumConfig.DYTM_OFFICE;
     config.dytmPeriphery = OndoDytmEthereumSharedData.DYTM_PERIPHERY;
     config.accountSplitterAndMerger = OndoDytmEthereumSharedData.DYTM_ACCOUNT_SPLITTER_AND_MERGER;
     config.dytmMarketConfig = OndoDytmEthereumSharedData.DYTM_MARKET_CONFIG;

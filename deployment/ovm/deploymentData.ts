@@ -1,6 +1,5 @@
 import { BigNumber } from "ethers";
 import { IAddresses, IFileNames } from "../types";
-import { AssetType } from "../upgrade/jobs/assetsJob";
 
 const protocolDao = "0x90b1a66957914EbbE7a8df254c0c1E455972379C";
 const proxyAdmin = "0x9FEE88a18479bf7f0D41Da03819538AA7A617730";
@@ -74,6 +73,7 @@ export const optimismProdData: IAddresses = {
   assets: {
     nativeAssetWrapper: assets.weth,
     usdc: assets.usdc,
+    usdcNative: assets.usdcNative,
     dht: assets.dht,
   },
 
@@ -166,7 +166,6 @@ export const optimismProdData: IAddresses = {
 
   velodromeCL: {
     nonfungiblePositionManager: "0x416b433906b1B72FA758e166e239c43d68dC6F29",
-    nonfungiblePositionManagerOld: "0xbB5DFE1380333CEE4c2EeBd7202c80dE2256AdF4",
     voter: velodromeV2Voter, // same as the v2 voter
     enabledGauges: [
       "0x15D715C142169bf93BC6C8C670C208dC3ACCe17e", // CL1-USDC/sUSD
@@ -222,17 +221,6 @@ export const optimismProdData: IAddresses = {
     decayTime: 86400, // 24 hours
     maxCumulativeSlippage: 10e4, // 10%
   },
-
-  rewardAssetSetting: [
-    {
-      rewardToken: "0x9560e827af36c94d2ac33a39bce1fe78631088db", // VELO (Velodrome V2)
-      linkedAssetTypes: [
-        AssetType["Velodrome CL NFT Position Asset"], // 26
-        AssetType["Velodrome V2 LP/Gauge Asset"], // 25
-      ],
-      linkedAssets: [],
-    },
-  ],
 
   flatMoney: {
     swapper: "0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D",

@@ -38,8 +38,8 @@ pragma abicoder v2;
 import "./Base64.sol";
 import "./interfaces/IDhedgeStakingV2Storage.sol";
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/utils/Strings.sol";
 
 // This is a standalone contract responsible for generating the token metadata and image encoded as base64 json
 // It is a seperate contract because of the contract size restriction of 24kb

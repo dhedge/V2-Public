@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import {Test} from "forge-std/Test.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 import {IPoolFactory} from "contracts/interfaces/IPoolFactory.sol";
 import {IPoolManagerLogic} from "contracts/interfaces/IPoolManagerLogic.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";

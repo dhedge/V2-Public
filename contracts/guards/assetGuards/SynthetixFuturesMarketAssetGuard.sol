@@ -35,12 +35,12 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "./ClosedAssetGuard.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
 import "../../interfaces/synthetix/IFuturesMarket.sol";
 import "../../interfaces/synthetix/IFuturesMarketSettings.sol";
 import "../../interfaces/synthetix/ISynth.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 /// @title FuturesMarket (Synthetix) Asset Guard
 /// @dev Asset type = 101

@@ -2,7 +2,7 @@
 
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../interfaces/IAggregatorV3Interface.sol";
 import "../interfaces/uniswapV2/IUniswapV2Pair.sol";

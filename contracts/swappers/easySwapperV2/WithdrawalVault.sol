@@ -2,11 +2,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import {SafeERC20} from "../../utils/SafeERC20.sol";
 import {IERC20} from "../../interfaces/IERC20.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import {EnumerableSetUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import {Initializable} from "@openzeppelin/v3/contracts-upgradeable/proxy/Initializable.sol";
+import {EnumerableSetUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
 import {ISwapper} from "../../interfaces/flatMoney/swapper/ISwapper.sol";
 import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
@@ -170,24 +170,22 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       uint16 assetType = IHasAssetInfo(poolFactory).getAssetType(asset);
       address[] memory unrolledAssets;
 
-      // Regular ERC20 tokens and dHEDGE vaults
-      if (assetType == 0) {
-        unrolledAssets = _detectDhedgeVault(asset);
-      }
       // Regular ERC20 tokens
-      else if (assetType == 1 || assetType == 4 || assetType == 14 || assetType == 22 || assetType == 200) {
+      if (assetType == 0 || assetType == 4 || assetType == 22 || assetType == 200) {
         unrolledAssets = _arraify(asset);
       }
-      // Aave positions (3 and 8) are withdrawn as regular ERC20s, which are guaranteed to be in `supportedAssets`.
+      // Nested vault: redeemed here, what it pays out is tracked by the recursive unroll
+      else if (assetType == 1) {
+        _unrollNestedVault(asset);
+      }
+      // Aave positions (8) are withdrawn as regular ERC20s, which are guaranteed to be in `supportedAssets`.
       // Same for "Assets" which use outside liquidity for withdrawals, like Flat Money's Leverage and GMX. Underlying ERC20 is guaranteed to be in `supportedAssets`.
       // Same for Midas pending redemption (43): its withdrawal leg is paid in the mToken, which is
       // guaranteed to be in `supportedAssets` (type 42) and is tracked by its own entry.
       else if (
-        assetType == 3 ||
         assetType == 8 ||
         assetType == 27 ||
         assetType == 32 ||
-        assetType == 36 ||
         assetType == 105 ||
         assetType == 35 ||
         assetType == 39 ||
@@ -248,10 +246,6 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
       else if (assetType == ASSET_TYPE_MIDAS_MTOKEN) {
         unrolledAssets = _arraify(asset);
       }
-      // Synthetix Perpetuals V2 - settled in sUSD
-      else if (assetType == 102) {
-        unrolledAssets = _arraify(SwapperV2Helpers.synthetixPerpsV2Helper(asset, poolFactory));
-      }
       // DYTM Office
       else if (assetType == 106) {
         require(i < _complexAssetsData.length, "missing DYTM complex asset data");
@@ -279,24 +273,18 @@ contract WithdrawalVault is IWithdrawalVault, Initializable {
     }
   }
 
-  /// @notice Unrolls dHEDGE vaults inside dHEDGE vaults or returns the asset
-  /// @dev Because dHEDGE vaults as assets are type 0 we need to check all type 0 to see if it is a vault
-  /// @param _asset The address of the asset
-  /// @return unrolledAssets Returns nothing when a dHEDGE vault, returns basic asset address otherwise
-  function _detectDhedgeVault(address _asset) internal returns (address[] memory unrolledAssets) {
-    if (IEasySwapperV2(creator).isdHedgeVault(_asset)) {
-      uint256 balance = IPoolLogic(_asset).balanceOf(address(this));
-      if (balance > 0) {
-        // Here we sacrifice slippage protection mechanism.
-        // This is equal to calling .withdrawSafe(balance, new IPoolLogic.ComplexAsset[](IHasSupportedAsset(IPoolLogic(_asset).poolManagerLogic()).getSupportedAssets().length))
-        IPoolLogic(_asset).withdraw(balance);
-        // Empty complexAssetsData: only DYTM (type 106) consumes it; nested vaults with DYTM
-        // positions will revert with "missing DYTM complex asset data".
-        _unrollAssets(_asset, new IPoolLogic.ComplexAsset[](0));
-      }
-    } else {
-      unrolledAssets = _arraify(_asset);
-    }
+  /// @dev Redeems the whole balance of a nested vault and unrolls what it pays out
+  /// @param _nestedVault Vault token the withdrawing vault holds as an asset
+  function _unrollNestedVault(address _nestedVault) internal {
+    uint256 balance = IPoolLogic(_nestedVault).balanceOf(address(this));
+    if (balance == 0) return;
+
+    // Here we sacrifice slippage protection mechanism.
+    // This is equal to calling .withdrawSafe(balance, new IPoolLogic.ComplexAsset[](IHasSupportedAsset(IPoolLogic(_nestedVault).poolManagerLogic()).getSupportedAssets().length))
+    IPoolLogic(_nestedVault).withdraw(balance);
+    // Empty complexAssetsData: only DYTM (type 106) consumes it; nested vaults with DYTM
+    // positions will revert with "missing DYTM complex asset data".
+    _unrollAssets(_nestedVault, new IPoolLogic.ComplexAsset[](0));
   }
 
   /// @dev Helper function to convert address to address[]

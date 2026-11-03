@@ -18,7 +18,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IPoolManagerLogic} from "../interfaces/IPoolManagerLogic.sol";
 import {IHasDaoInfo} from "../interfaces/IHasDaoInfo.sol";
@@ -273,21 +273,29 @@ library PoolLogicLib {
       }
     }
 
-    // invalid contract guard call, try asset guard
+    // Contract guard either doesn't exist or rejected the transaction (returned txType=0).
+    // Now try the asset guard path.
     if (txType == 0) {
-      // no contract guard configured, get asset guard
+      // getAssetGuard returns zero if `_to` is not a valid asset in AssetHandler,
+      // or if its asset type has no guard set in Governance
       address assetGuard = IHasGuardInfo(_factory).getAssetGuard(_to);
 
       if (assetGuard == address(0)) {
-        // If there is no contractGuard and no assetGuard then use the ERC20Guard for the transaction,
-        // which will only allow a valid approve transaction
+        // `_to` is not a registered asset, or its asset type has no guard.
+        // Fall back to ERC20Guard which only allows approve() calls where:
+        // - the amount is 0, or the spender has a contract guard set
+        // This enables managers to approve ANY ERC20 token (even unregistered ones)
+        // to whitelisted protocol contracts (routers, lending pools, etc.)
         address governanceAddress = IPoolFactory(_factory).governanceAddress();
-        assetGuard = IGovernance(governanceAddress).assetGuards(0); // get ERC20Guard (assetType 0)
+        assetGuard = IGovernance(governanceAddress).assetGuards(0); // ERC20Guard (assetType 0)
       } else {
-        // if asset is configured, ensure that it's enabled in the pool
+        // `_to` is a registered asset with a specific guard.
+        // Require it to be enabled in the pool's supported assets list.
         require(IHasSupportedAsset(_poolManagerLogic).isSupportedAsset(_to), "dh22");
       }
       guard = assetGuard;
+      // For ERC20Guard: only approve() with amount 0 or to guarded contracts is allowed
+      // For ClosedAssetGuard (and its derivatives): returns txType=0, forcing interaction via contract guards instead
       (txType, isPublic) = IGuard(assetGuard).txGuard(_poolManagerLogic, _to, _data);
     }
 

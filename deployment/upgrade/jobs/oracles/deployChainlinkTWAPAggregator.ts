@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { TAssetConfig, IChainlinkTWAPAggregatorConfig, IUniV3TWAPAggregatorSpecificConfig } from "./oracleTypes";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { Address } from "../../../types";
 import { deployERC4626PriceAggregatorJob } from "./deployERC4626PriceAggregator";
 

@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import {CompoundV3CometAssetGuard} from "contracts/guards/assetGuards/CompoundV3CometAssetGuard.sol";
 import {CompoundV3CometContractGuard} from "contracts/guards/contractGuards/compound/CompoundV3CometContractGuard.sol";
@@ -15,9 +15,12 @@ import {ICompoundV3Comet} from "contracts/interfaces/compound/ICompoundV3Comet.s
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract CompoundV3Test is ArbitrumSetup {
-  uint256 internal FORK_BLOCK_NUMBER = 251583884;
+  /// @dev COMP emissions on this Comet have ended (baseTrackingSupplySpeed is 0 at head), so the claim test
+  ///      re-forks at a block where they still accrued and runs the setup again there.
+  uint256 internal constant COMP_REWARDS_BLOCK = 251583884;
 
   // Compound V3 and related contracts
   address internal immutable USDCAddy;
@@ -37,7 +40,7 @@ contract CompoundV3Test is ArbitrumSetup {
   ICompoundV3CometRewards internal constant cometRewards =
     ICompoundV3CometRewards(0x88730d254A2f7e6AC8388c3198aFd694bA9f7fae);
 
-  constructor() ArbitrumSetup(FORK_BLOCK_NUMBER) {
+  constructor() ArbitrumSetup(ForkBlocks.ARBITRUM) {
     USDCAddy = usdcData.asset;
     USDC = IERC20(usdcData.asset);
   }
@@ -296,6 +299,9 @@ contract CompoundV3Test is ArbitrumSetup {
   }
 
   function test_manager_can_claim_rewards_into_the_vault() public {
+    forkBlockNumber = COMP_REWARDS_BLOCK;
+    setUp();
+
     address rewardAsset = cometRewards.rewardConfig(address(cUSDC)).token;
     _registerRewardAsset(rewardAsset);
     _enableRewardAssetOnFund(rewardAsset);

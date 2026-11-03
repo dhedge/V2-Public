@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { Address } from "../../../types";
 import { IAssetConfig, IVelodromeStableLPAggregatorSpecificConfig, TAssetConfig, TOracleDeployer } from "./oracleTypes";
 

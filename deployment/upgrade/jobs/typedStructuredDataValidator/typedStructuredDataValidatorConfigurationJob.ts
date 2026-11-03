@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 // Enum must match StructuredDataSupported in TypedStructuredDataValidator.sol

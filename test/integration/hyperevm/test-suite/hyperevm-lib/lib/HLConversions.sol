@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >= 0.7.6 <0.9.0;
+pragma solidity 0.8.28;
 
 import {HLConstants} from "./HLConstants.sol";
 import {PrecompileLib} from "./PrecompileLib.sol";
-import {SafeCast} from "@openzeppelin/v5/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 library HLConversions {
     error HLConversions__InvalidToken(uint64 token);
 

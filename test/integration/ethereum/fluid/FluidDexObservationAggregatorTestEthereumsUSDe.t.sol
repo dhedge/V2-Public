@@ -5,6 +5,7 @@ import {FluidDexObservationAggregatorTestSetup} from "test/integration/common/fl
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
 import {IFluidDexT1} from "contracts/interfaces/fluid/IFluidDexT1.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @notice Tests FluidDexObservationAggregator with the sUSDe/USDT Fluid DEX pool
 contract FluidDexObservationAggregatorTestEthereumsUSDe is FluidDexObservationAggregatorTestSetup {
@@ -14,11 +15,8 @@ contract FluidDexObservationAggregatorTestEthereumsUSDe is FluidDexObservationAg
   uint256 private constant VOLATILITY_LIMIT = 100; // 1% (100 bps)
   uint256 private constant BUFFER_SIZE = 64; // number of observations
 
-  // Reference oracle: UniV3 TWAP for sUSDe
-  address private constant sUSDe_UNIV3_TWAP_ORACLE = 0x0e5458C2A9A9cefcf8c8C4C5B633b492124584C0;
-
-  // Maximum acceptable deviation: less than 1 bps = 0%
-  uint256 private constant MAX_DEVIATION = 0;
+  // Maximum acceptable deviation: 10 bps = 0.1%
+  uint256 private constant MAX_DEVIATION = 10;
 
   constructor()
     FluidDexObservationAggregatorTestSetup(
@@ -30,13 +28,13 @@ contract FluidDexObservationAggregatorTestEthereumsUSDe is FluidDexObservationAg
       MAX_STALENESS,
       VOLATILITY_LIMIT,
       BUFFER_SIZE,
-      IAggregatorV3Interface(sUSDe_UNIV3_TWAP_ORACLE),
+      IAggregatorV3Interface(EthereumConfig.sUSDe_CHAINLINK_ORACLE),
       MAX_DEVIATION
     )
   {}
 
   function setUp() public override {
-    vm.createSelectFork("ethereum", 24376734);
+    vm.createSelectFork("ethereum", ForkBlocks.ETHEREUM);
 
     super.setUp();
   }

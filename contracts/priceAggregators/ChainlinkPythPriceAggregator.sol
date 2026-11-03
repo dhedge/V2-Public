@@ -3,8 +3,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SignedSafeMath} from "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IAggregatorV3Interface as IChainlinkAggregatorV3} from "../interfaces/IAggregatorV3Interface.sol";
 import {IPyth} from "../interfaces/pyth/IPyth.sol";

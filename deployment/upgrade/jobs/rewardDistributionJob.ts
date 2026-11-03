@@ -1,7 +1,8 @@
 import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { Address, IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../types";
 
 const INDEX_TO_DEPLOY = 3;

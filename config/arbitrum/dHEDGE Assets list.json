@@ -149,7 +149,7 @@
   {
     "assetName": "Wrapped liquid staked Ether",
     "assetAddress": "0x5979d7b546e38e414f7e9822514be443a4800529",
-    "assetType": "200",
+    "assetType": "0",
     "oracleType": "ETHCrossAggregator",
     "specificOracleConfig": {
       "assetToEthChainlinkOracleAddress": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
@@ -180,13 +180,13 @@
   {
     "assetName": "Toros ETHBULL3X",
     "assetAddress": "0xf715724abba480d4d45f4cb52bef5ce5e3513ccc",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BTCBULL3X",
     "assetAddress": "0xad38255febd566809ae387d5be66ecd287947cb9",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -247,7 +247,7 @@
   {
     "assetName": "Toros BTCBEAR1X",
     "assetAddress": "0x27D8FDb0251B48D8EdD1Ad7bEDf553cF99AbE7B0",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -414,19 +414,19 @@
   {
     "assetName": "Toros BTCBULL2X",
     "assetAddress": "0xe3254397f5D9C0B69917EBb49B49e103367B406f",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros ETHBULL2X",
     "assetAddress": "0x696f6d66C2da2AA4A400a4317EEC8da88f7A378c",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros ETHBEAR1X",
     "assetAddress": "0x40d30B13666c55B1F41eE11645B5ea3Ea2CA31f8",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -441,13 +441,13 @@
   {
     "assetName": "Toros SOL1X",
     "assetAddress": "0xA6686c9C6bC90F84E3fb77C3d5417fd66bc05697",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SUI1X",
     "assetAddress": "0xC8f346c8045fa911eAC2FFef628e0c5FcDb445bD",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -462,13 +462,13 @@
   {
     "assetName": "Toros DOGE1X",
     "assetAddress": "0x06ABBA36D0991A83e75f54dBB2a8Dc91F30f8C78",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros XRP1X",
     "assetAddress": "0x1369E0F1520671cd0748984c40955F6A6aF40487",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -513,13 +513,13 @@
   {
     "assetName": "Toros CRV1X",
     "assetAddress": "0x0f5a811Cb153BDCFD74AD69E82567396385feC3a",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BNB1X",
     "assetAddress": "0xb6E92517C99087cB58D8E8A8e649C598137F3fc3",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -570,7 +570,7 @@
   {
     "assetName": "Toros BTCy",
     "assetAddress": "0x319fD1d1D74607B7a224EB4e31A4aa75837D7d01",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -585,37 +585,37 @@
   {
     "assetName": "Toros HYPE1X",
     "assetAddress": "0xbfc82f7823C0261903057B04B1C7C0E4e49eb550",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros LINK1X",
     "assetAddress": "0xeCB200a89DfcC09663493A0f67089C7FeBf08D14",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros LINKBULL2X",
     "assetAddress": "0x4Ec9C0f08BDCe085e9D4053B393a290D7AFC8083",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros XRPBULL2X",
     "assetAddress": "0xD0F9912f604C0A5Fd9bd03889243F5c426b38c81",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros DOGEBULL2X",
     "assetAddress": "0x7d37089ed7434c50f659D40b1E1fE09Be026fc77",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SUIBULL2X",
     "assetAddress": "0x1a9B3A496Fe222Ba84c53E215A904c555C3157c9",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -648,145 +648,145 @@
   {
     "assetName": "Toros ETHy",
     "assetAddress": "0x43DA9b0aB53242c55A9Ff9c722FfC2a373D639c7",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BNBBULL2X",
     "assetAddress": "0x829E90E558A2eEBa733fEffaD3419543C4bCBa08",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BNBBEAR1X",
     "assetAddress": "0x7AeD02321Cd9aeFCaEb6942bc10B35d8dAf85722",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BTCBEAR2X",
     "assetAddress": "0x3e63f81b3AA4e821392fCcdAbdD7D0c960C0235E",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BTCBULL4X",
     "assetAddress": "0xd49d22f2a2f05B2088fD42503409E430a8a7D827",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros CRVBEAR1X",
     "assetAddress": "0xeE46dEE5594ADfe7aeB9B9c7aC33Baf214b8F075",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros CRVBULL2X",
     "assetAddress": "0xF8eDE83467778ed0c1ab54CB21F17Dd9d33e6c86",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros DOGEBEAR1X",
     "assetAddress": "0x4D92f42b2936d2C685027cAd2F682f2cE8E812AC",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros ETHBEAR2X",
     "assetAddress": "0x41e29b6d6295f287070b3759CcaA6964b7f4cb31",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros ETHBULL4X",
     "assetAddress": "0xBf4aB4224B2AC26667Cd4b8A0E5134D55cB0B293",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros HYPEBEAR1X",
     "assetAddress": "0x44F9CBc1356F5592f91A69eFE923B91514986381",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros HYPEBULL2X",
     "assetAddress": "0xE2Afa0cA430432ffd22564BdeA87fa4cFB879c4e",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros LINKBEAR1X",
     "assetAddress": "0x1D01303F4cBD1B4402d300ce1591CbADad74e075",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SOLBEAR1X",
     "assetAddress": "0xda6d2144FaEc116b53715F76Ca4A79925A3bB1fB",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SOLBULL2X",
     "assetAddress": "0xE9A71F5230a41Aa09f4099a41d24450E85462Fe1",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SOLBULL3X",
     "assetAddress": "0xcFEc7a15726D4b5d183783C9033b921bA3a5090a",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SUIBEAR1X",
     "assetAddress": "0x1E0e416ADD4F3A66fd4258fA21942d9116e1077A",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros XRPBEAR1X",
     "assetAddress": "0x764FAd1F0A4B1D5c20f0432BA5c8c594C57051B7",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros PUMPBEAR1X",
     "assetAddress": "0x360E83BD7f746a7bcAe4685c2BF589882392F54c",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros PUMP1X",
     "assetAddress": "0x6030aB5a681398Ab5616Da99A9C8453fd84bc802",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros PUMPBULL2X",
     "assetAddress": "0x6D72a0883AA4ac3d32067B6eC21e3f84a67485e2",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SOLBEAR2X",
     "assetAddress": "0x1227a7C904F0A3923f1319cCcE15ab23a66FD4D2",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros SUIBULL3X",
     "assetAddress": "0xB6783Ac4a451e379Af99067A02c41f1819123EC0",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros XRPBULL3X",
     "assetAddress": "0xa2bD75D941634F2D2800cA9a20b20A17a2Fea17e",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
@@ -810,37 +810,73 @@
   {
     "assetName": "Toros AAVEBEAR1X",
     "assetAddress": "0x4ACa336C6A4eFfBd571Ab4c2621ee0ec4A594c46",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros AAVEBULL2X",
     "assetAddress": "0xdDaaCbDBf778924e11Eb6D50EB6CE5EB3Cb95DF5",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros HYPEBULL3X",
     "assetAddress": "0x0219549D65ac79326bD7874f6c610CB5e1B76d33",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BTCP1X",
     "assetAddress": "0x8990f5e57a8E0b5CABB68D1CD5bd790A92e32f5C",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BTCP2X",
     "assetAddress": "0x99C917097D455d54F68A6b8e73095E30badddAcE",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BTCP3X",
     "assetAddress": "0x31481Fa8e8802EAcF1cfa3aaBDD11be24FcC3476",
-    "assetType": "0",
+    "assetType": "1",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "GMX Market NEAR/USD [WETH-USDC]",
+    "assetAddress": "0x63Dc80EE90F26363B3FCD609007CC9e14c8991BE",
+    "assetType": "105",
+    "oracleType": "USDPriceAggregator",
+    "specificOracleConfig": {
+      "USDPriceOracleAddress": "0x16fE67E412AC7732F18Eeb318e24651C85AFcF76"
+    }
+  },
+  {
+    "assetName": "Virtual NEAR",
+    "assetAddress": "0x1FF7F3EFBb9481Cbd7db4F932cBCD4467144237C",
+    "assetType": "38",
+    "specificOracleConfig": {
+      "chainlinkOracleAddress": "0xBF5C3fB2633e924598A46B9D07a174a9DBcF57C0"
+    },
+    "oracleType": "ChainlinkAggregator"
+  },
+  {
+    "assetName": "Toros NEAR1X",
+    "assetAddress": "0x75d1c951e5BCE4CcA5091901A7e7F2a697d99e5E",
+    "assetType": "1",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros NEARBULL2X",
+    "assetAddress": "0xF1078306A52Aa9370e846f93ff3dD6591d028051",
+    "assetType": "1",
+    "oracleType": "DHedgePoolAggregator"
+  },
+  {
+    "assetName": "Toros NEARBULL3X",
+    "assetAddress": "0xb6bd70E974A77E9440ABa6E44865c7bCfA585954",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   }
 ]

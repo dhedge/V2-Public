@@ -1,7 +1,9 @@
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IUpgradeConfig, IProposeTxProperties, IVersions, IFileNames } from "../../types";
+import { OZ_V3_INITIALIZER_KINDS } from "../../helpers/upgradeValidation";
 
 export const poolLogicJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -32,7 +34,7 @@ export const poolLogicJob: IJob<void> = async (
         },
       });
       const poolLogic = await upgrades.prepareUpgrade(oldPooLogicProxy, PoolLogic, {
-        unsafeAllow: ["external-library-linking"],
+        unsafeAllow: ["external-library-linking", ...OZ_V3_INITIALIZER_KINDS],
       });
       console.log("poolLogic deployed to: ", poolLogic);
       versions[config.newTag].contracts.PoolLogic = poolLogic;
@@ -69,7 +71,7 @@ export const poolLogicJob: IJob<void> = async (
       });
       const poolLogicProxy = await upgrades.deployProxy(PoolLogic, [], {
         initializer: false,
-        unsafeAllow: ["external-library-linking"],
+        unsafeAllow: ["external-library-linking", ...OZ_V3_INITIALIZER_KINDS],
       });
       await poolLogicProxy.deployed();
       console.log("PoolLogicProxy deployed at ", poolLogicProxy.address);

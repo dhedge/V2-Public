@@ -2,8 +2,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
-import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/v3/contracts/proxy/ProxyAdmin.sol";
 
 import {Governance} from "contracts/Governance.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";
@@ -35,6 +35,7 @@ abstract contract PoolUnitTestSetup is PoolTestHelpers {
   address internal usdcPriceFeed = makeAddr("usdcPriceFeed");
   address internal wethPriceFeed = makeAddr("wethPriceFeed");
 
+  address internal proxyAdmin;
   Governance internal governance;
   AssetHandler internal assetHandlerProxy;
   PoolFactory internal poolFactoryProxy;
@@ -53,7 +54,7 @@ abstract contract PoolUnitTestSetup is PoolTestHelpers {
 
     vm.startPrank(owner);
 
-    address proxyAdmin = address(new ProxyAdmin());
+    proxyAdmin = address(new ProxyAdmin());
     governance = new Governance();
     governance.setAssetGuard({assetType: 0, guardAddress: address(new ERC20Guard())});
 
@@ -85,27 +86,43 @@ abstract contract PoolUnitTestSetup is PoolTestHelpers {
     IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](2);
     supportedAssets[0] = IHasSupportedAsset.Asset({asset: address(usdc), isDeposit: true});
     supportedAssets[1] = IHasSupportedAsset.Asset({asset: address(weth), isDeposit: true});
-
-    vm.prank(manager);
-    fund = PoolLogic(
-      poolFactoryProxy.createFund({
-        _privatePool: false,
-        _manager: manager,
-        _managerName: "Manager",
-        _fundName: "PoolUnitTest",
-        _fundSymbol: "PUT",
-        _performanceFeeNumerator: 0,
-        _managerFeeNumerator: 0,
-        _entryFeeNumerator: 0,
-        _exitFeeNum: 0,
-        _supportedAssets: supportedAssets
-      })
-    );
+    fund = _createFund(supportedAssets);
     fundManagerLogic = PoolManagerLogic(fund.poolManagerLogic());
 
     _fund(manager);
     _fund(investor);
     _fund(otherInvestor);
+  }
+
+  /// @dev A public vault run by `manager` with no fees; the common case.
+  function _createFund(IHasSupportedAsset.Asset[] memory _supportedAssets) internal returns (PoolLogic) {
+    return _createFund(manager, _supportedAssets, 0, 0, 0, 0);
+  }
+
+  function _createFund(
+    address _manager,
+    IHasSupportedAsset.Asset[] memory _supportedAssets,
+    uint256 _performanceFeeNumerator,
+    uint256 _managerFeeNumerator,
+    uint256 _entryFeeNumerator,
+    uint256 _exitFeeNumerator
+  ) internal returns (PoolLogic) {
+    vm.prank(_manager);
+    return
+      PoolLogic(
+        poolFactoryProxy.createFund({
+          _privatePool: false,
+          _manager: _manager,
+          _managerName: "Manager",
+          _fundName: "Test Vault",
+          _fundSymbol: "TV",
+          _performanceFeeNumerator: _performanceFeeNumerator,
+          _managerFeeNumerator: _managerFeeNumerator,
+          _entryFeeNumerator: _entryFeeNumerator,
+          _exitFeeNum: _exitFeeNumerator,
+          _supportedAssets: _supportedAssets
+        })
+      );
   }
 
   function _fund(address _account) internal {

@@ -15,8 +15,8 @@ import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
 import {IHasAssetInfo} from "contracts/interfaces/IHasAssetInfo.sol";
 import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
 // Aliased so the mock can use SafeERC20 (USDT-safe) without clashing with the repo IERC20 used by the ISwapper structs.
-import {IERC20 as IERC20OZ} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {IERC20 as IERC20OZ} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/v3/contracts/token/ERC20/SafeERC20.sol";
 
 /// @dev Minimal admin surface of the flatMoney Swapper (not exposed by the repo's ISwapper interface).
 interface ISwapperRouterAdmin {

@@ -1,7 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../types";
+import { OZ_V3_INITIALIZER_KINDS } from "../../helpers/upgradeValidation";
 
 export const poolFactoryJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -22,7 +24,9 @@ export const poolFactoryJob: IJob<void> = async (
       const proxyAdmin = new ethers.utils.Interface(ProxyAdmin.abi);
 
       const PoolFactoryContract = await ethers.getContractFactory("PoolFactory");
-      const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract);
+      const newPoolFactoryLogic = await upgrades.prepareUpgrade(poolFactoryProxy, PoolFactoryContract, {
+        unsafeAllow: OZ_V3_INITIALIZER_KINDS,
+      });
       console.log("New PoolFactory logic deployed to: ", newPoolFactoryLogic);
 
       await tryVerify(hre, newPoolFactoryLogic, "contracts/PoolFactory.sol:PoolFactory", []);
@@ -65,13 +69,17 @@ export const poolFactoryJob: IJob<void> = async (
       }
 
       const PoolFactory = await ethers.getContractFactory("PoolFactory");
-      const poolFactory = await upgrades.deployProxy(PoolFactory, [
-        versions[config.oldTag].contracts.PoolLogic,
-        versions[config.oldTag].contracts.PoolManagerLogic,
-        versions[config.oldTag].contracts.AssetHandlerProxy,
-        addresses.protocolTreasuryAddress,
-        governanceAddress,
-      ]);
+      const poolFactory = await upgrades.deployProxy(
+        PoolFactory,
+        [
+          versions[config.oldTag].contracts.PoolLogic,
+          versions[config.oldTag].contracts.PoolManagerLogic,
+          versions[config.oldTag].contracts.AssetHandlerProxy,
+          addresses.protocolTreasuryAddress,
+          governanceAddress,
+        ],
+        { unsafeAllow: OZ_V3_INITIALIZER_KINDS },
+      );
       await poolFactory.deployed();
       console.log("poolFactory deployed at ", poolFactory.address);
 

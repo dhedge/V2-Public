@@ -17,10 +17,10 @@
 
 pragma solidity 0.7.6;
 
-import {Math} from "@openzeppelin/contracts/math/Math.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import {Math} from "@openzeppelin/v3/contracts/math/Math.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SignedSafeMath} from "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
 
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {DhedgeMath} from "../utils/DhedgeMath.sol";

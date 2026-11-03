@@ -8,7 +8,7 @@ pragma solidity >=0.7.6 <0.9.0;
 abstract contract AssetTypes {
   enum AssetTypeIncomplete {
     CHAINLINK, // 0
-    SNX_SYNTH, // 1
+    NESTED_VAULT, // 1
     SUSHI_LP, // 2
     AAVE_V2, // 3
     LENDING_ENABLED, // 4

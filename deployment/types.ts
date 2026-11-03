@@ -1,10 +1,27 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BigNumber, BigNumberish } from "ethers";
-import { RewardAssetSettingStruct } from "../types/RewardAssetGuard";
-import { PoolSettingStruct, VirtualTokenOracleSettingStruct } from "../types/GmxExchangeRouterContractGuard";
-import { RewardTokenConfigStruct } from "../types/AngleDistributorContractGuard";
-import { RouteHintStruct } from "../types/DhedgeSuperSwapper";
 import type { IContracts } from "./versionsContracts";
+import type { RewardAssetGuard } from "../types/contracts/guards/assetGuards/RewardAssetGuard";
+import type { AngleDistributorContractGuard } from "../types/contracts/guards/contractGuards/AngleDistributorContractGuard";
+import type { AcrossContractGuard } from "../types/contracts/guards/contractGuards/across/AcrossContractGuard";
+import type { GmxStructs } from "../types/contracts/guards/contractGuards/gmx/GmxExchangeRouterContractGuard";
+import type { DhedgeSuperSwapper } from "../types/contracts/routers/DhedgeSuperSwapper";
+import type { EasySwapperV2 } from "../types/contracts/swappers/easySwapperV2/EasySwapperV2";
+import type { FlatMoneyBasisContractGuard } from "../types/contracts/guards/contractGuards/flatMoney/FlatMoneyDelayedOrderContractGuard";
+import type { IHyperliquidCoreWriterContractGuard } from "../types/contracts/interfaces/hyperliquid/IHyperliquidCoreWriterContractGuard";
+import type { OndoAttestationOracle } from "../types/contracts/oracles/OndoAttestationOracle";
+
+// Struct types from the typechain output, re-exported so jobs never import the generated tree directly.
+export type ApprovedAssetSettingStruct = IHyperliquidCoreWriterContractGuard.ApprovedAssetSettingStruct;
+export type CrossChainBridgeStruct = AcrossContractGuard.CrossChainBridgeStruct;
+export type FlatMoneyPoolSettingStruct = FlatMoneyBasisContractGuard.PoolSettingStruct;
+export type PoolSettingStruct = GmxStructs.PoolSettingStruct;
+export type ProofConfigStruct = OndoAttestationOracle.ProofConfigStruct;
+export type RewardAssetSettingStruct = RewardAssetGuard.RewardAssetSettingStruct;
+export type RewardTokenConfigStruct = AngleDistributorContractGuard.RewardTokenConfigStruct;
+export type RouteHintStruct = DhedgeSuperSwapper.RouteHintStruct;
+export type VirtualTokenOracleSettingStruct = GmxStructs.VirtualTokenOracleSettingStruct;
+export type WhitelistSettingStruct = EasySwapperV2.WhitelistSettingStruct;
 
 export type Address = string;
 
@@ -41,7 +58,7 @@ export interface IFileNames {
   assetsFileName: string;
   contractGuardsFileName: string;
   assetGuardsFileName: string;
-  // This file is an entry point for guards deprecation and is picked by a script. Copy here guards for deprecation.
+  // Contract guard rows moved here from contractGuardsFileName; read by deprecateContractGuardsJob.
   deprecatedContractGuardsFileName?: string;
   approvedPerpsFileName?: string;
 }
@@ -55,6 +72,7 @@ interface IDeploymentsConfig {
   assets?: {
     nativeAssetWrapper: Address;
     usdc?: Address;
+    usdcNative?: Address;
     dht?: Address;
   };
 
@@ -135,7 +153,6 @@ interface IDeploymentsConfig {
 
   velodromeCL?: {
     nonfungiblePositionManager: Address;
-    nonfungiblePositionManagerOld?: Address;
     enabledGauges: Address[];
     voter: Address;
   };
@@ -183,20 +200,14 @@ interface IDeploymentsConfig {
   // Flat Money
   flatMoney?: {
     delayedOrder?: Address;
-    perpMarketWhitelistedVaults?: {
-      poolLogic: Address;
-      withdrawalAsset: Address;
-    }[];
+    perpMarketWhitelistedVaults?: FlatMoneyPoolSettingStruct[];
     swapper: Address;
   };
 
   flatMoneyV2?: {
     orderAnnouncementModule: Address;
     orderExecutionModule: Address;
-    whitelistedVaults: {
-      poolLogic: Address;
-      withdrawalAsset: Address;
-    }[];
+    whitelistedVaults: FlatMoneyPoolSettingStruct[];
   };
 
   flatMoneyOptions?: {
@@ -237,13 +248,7 @@ interface IDeploymentsConfig {
 
   ondo?: {
     gmTokenManager: Address;
-    attestationOracle: {
-      allowedUserId: string;
-      maxProofAge: number;
-      sanityDeviationBps: number;
-      minQuoteValue: string;
-      maxQuoteValue: string;
-    };
+    attestationOracle: ProofConfigStruct & { allowedUserId: string };
     ondoGMSwapContractGuard?: {
       maxSlippagePerSwapBps: number;
     };
@@ -284,24 +289,18 @@ export type IProposeTxProperties = {
 
 export type IAddresses = IProposeTxProperties & IDeploymentsConfig;
 
-type RecordNumberString = Record<string, number | string>;
-export interface IDeployedAssetGuard extends RecordNumberString {
+export interface IDeployedAssetGuard {
   assetType: number;
   guardName: string;
   guardAddress: string;
   description: string;
 }
 
-export interface IDeployedContractGuard extends RecordNumberString {
+export interface IDeployedContractGuard {
   contractAddress: string;
   guardName: string;
   guardAddress: string;
   description: string;
-}
-
-export interface INotSureGuard extends RecordNumberString {
-  name: string;
-  destination: string;
 }
 
 export type IVersion = {
@@ -323,7 +322,7 @@ export type IVersion = {
       authorizedCallers: Address[];
     };
     hyperliquidCoreWriterGuard?: {
-      approvedPerps: { perpName: string; assetId: number; approved: boolean }[];
+      approvedPerps: (ApprovedAssetSettingStruct & { perpName: string })[];
     };
   };
 };

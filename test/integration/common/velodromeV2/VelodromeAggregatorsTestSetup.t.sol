@@ -4,7 +4,6 @@ pragma abicoder v2;
 
 import {Test} from "forge-std/Test.sol";
 
-import {VelodromeStableLPAggregator} from "contracts/priceAggregators/VelodromeStableLPAggregator.sol";
 import {VelodromeVariableLPAggregator} from "contracts/priceAggregators/VelodromeVariableLPAggregator.sol";
 import {VelodromeV2TWAPAggregator} from "contracts/priceAggregators/VelodromeV2TWAPAggregator.sol";
 import {IVelodromeV2Router} from "contracts/interfaces/velodrome/IVelodromeV2Router.sol";
@@ -12,10 +11,10 @@ import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interfac
 import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {IVelodromeV2Pair} from "contracts/interfaces/velodrome/IVelodromeV2Pair.sol";
 
-/// @notice The three Velodrome price feeds dHEDGE relies on, and the single property that makes
+/// @notice The two Velodrome price feeds dHEDGE relies on, and the single property that makes
 /// them safe to price vault assets with: a trader moving the pool must not move the reported
-/// price. LP aggregators derive value from reserves and the underlyings' oracles rather than from
-/// the spot ratio, and the TWAP aggregator averages over time.
+/// price. The LP aggregator derives value from reserves and the underlyings' oracles rather than
+/// from the spot ratio, and the TWAP aggregator averages over time.
 /// @dev The original TWAP test compared against the live CoinGecko API. That is an external
 /// dependency and says nothing about manipulation, so it is replaced by the property above.
 abstract contract VelodromeAggregatorsTestSetup is Test {
@@ -28,7 +27,6 @@ abstract contract VelodromeAggregatorsTestSetup is Test {
     address router;
     address factory; // Velodrome pool factory, used to route swaps
     address dhedgeFactory; // dHEDGE PoolFactory - the LP aggregators price underlyings through it
-    address stablePool; // USDC/DAI
     address variablePool; // WETH/USDC
     address usdc;
     address dai;
@@ -38,7 +36,6 @@ abstract contract VelodromeAggregatorsTestSetup is Test {
 
   TestParams internal params;
 
-  VelodromeStableLPAggregator internal stableLpAggregator;
   VelodromeVariableLPAggregator internal variableLpAggregator;
   VelodromeV2TWAPAggregator internal wethTwapAggregator;
 
@@ -49,7 +46,6 @@ abstract contract VelodromeAggregatorsTestSetup is Test {
   }
 
   function setUp() public virtual {
-    stableLpAggregator = new VelodromeStableLPAggregator(params.stablePool, params.dhedgeFactory);
     variableLpAggregator = new VelodromeVariableLPAggregator(params.variablePool, params.dhedgeFactory);
     // WETH priced through its pool against USDC, with USDC's Chainlink feed as the anchor.
     wethTwapAggregator = new VelodromeV2TWAPAggregator(
@@ -63,13 +59,11 @@ abstract contract VelodromeAggregatorsTestSetup is Test {
   /* ========== SANITY ========== */
 
   function test_aggregators_report_eight_decimals() public view {
-    assertEq(uint256(stableLpAggregator.decimals()), PRICE_DECIMALS);
     assertEq(uint256(variableLpAggregator.decimals()), PRICE_DECIMALS);
     assertEq(uint256(wethTwapAggregator.decimals()), PRICE_DECIMALS);
   }
 
   function test_aggregators_report_a_positive_price() public view {
-    assertGt(_price(address(stableLpAggregator)), 0);
     assertGt(_price(address(variableLpAggregator)), 0);
     assertGt(_price(address(wethTwapAggregator)), 0);
   }
@@ -85,14 +79,6 @@ abstract contract VelodromeAggregatorsTestSetup is Test {
   }
 
   /* ========== MANIPULATION RESISTANCE ========== */
-
-  function test_stable_lp_price_survives_a_two_hundred_thousand_dollar_swap() public {
-    _assertLpPriceHoldsThroughSwap(address(stableLpAggregator), params.usdc, params.dai, true, 200_000e6);
-  }
-
-  function test_stable_lp_price_survives_a_one_million_dollar_swap() public {
-    _assertLpPriceHoldsThroughSwap(address(stableLpAggregator), params.usdc, params.dai, true, 1_000_000e6);
-  }
 
   function test_variable_lp_price_survives_a_two_hundred_thousand_dollar_swap() public {
     _assertLpPriceHoldsThroughSwap(address(variableLpAggregator), params.usdc, params.weth, false, 200_000e6);

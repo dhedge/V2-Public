@@ -6,7 +6,7 @@ pragma abicoder v2;
 import {Test} from "forge-std/Test.sol";
 
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import {DhedgeUniV3V2Router} from "contracts/routers/DhedgeUniV3V2Router.sol";
 import {DhedgeSuperSwapper} from "contracts/routers/DhedgeSuperSwapper.sol";
@@ -15,6 +15,7 @@ import {IV3SwapRouter} from "contracts/interfaces/uniswapV3/IV3SwapRouter.sol";
 
 abstract contract SuperSwapperTest is Test {
   string public network;
+  uint256 public forkBlockNumber;
   address public uniV3Factory;
   address public uniV3Router;
   address[] public uniV2LikeRouters;
@@ -29,6 +30,7 @@ abstract contract SuperSwapperTest is Test {
 
   constructor(
     string memory _network,
+    uint256 _forkBlockNumber,
     address _uniV3Factory,
     address _uniV3Router,
     address[] memory _uniV2LikeRouters,
@@ -37,6 +39,7 @@ abstract contract SuperSwapperTest is Test {
     address _tokenOut
   ) {
     network = _network;
+    forkBlockNumber = _forkBlockNumber;
     uniV3Factory = _uniV3Factory;
     uniV3Router = _uniV3Router;
     uniV2LikeRouters = _uniV2LikeRouters;
@@ -46,7 +49,7 @@ abstract contract SuperSwapperTest is Test {
   }
 
   function setUp() public virtual {
-    vm.createSelectFork(network);
+    vm.createSelectFork(network, forkBlockNumber);
 
     // Deploy DhedgeUniV3V2Router
     uniV3V2Router = new DhedgeUniV3V2Router(IUniswapV3Factory(uniV3Factory), IV3SwapRouter(uniV3Router));

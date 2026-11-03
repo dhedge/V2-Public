@@ -3,8 +3,8 @@
 pragma solidity ^0.7.0;
 
 import {IERC20} from "../interfaces/IERC20.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {Address} from "@openzeppelin/v3/contracts/utils/Address.sol";
 
 /**
  * @title SafeERC20

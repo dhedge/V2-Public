@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import {IPancakeNonfungiblePositionManager} from "../../../interfaces/pancake/IPancakeNonfungiblePositionManager.sol";
 import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import {UniswapV3PriceLibrary} from "../../../utils/uniswap/UniswapV3PriceLibrary.sol";
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
@@ -40,6 +40,8 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
     bytes memory params = getParams(data);
     address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
+    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "cl asset not enabled");
+
     if (method == IPancakeNonfungiblePositionManager.mint.selector) {
       IPancakeNonfungiblePositionManager.MintParams memory mintParams = abi.decode(
         params,
@@ -48,7 +50,6 @@ contract PancakeNonfungiblePositionGuard is PancakeCLBaseContractGuard {
 
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
-      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "pancake cl asset not enabled");
       require(pool == mintParams.recipient, "recipient is not pool");
 
       UniswapV3PriceLibrary.assertFairPrice(

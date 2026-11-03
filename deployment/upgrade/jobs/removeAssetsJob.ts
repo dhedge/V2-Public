@@ -1,8 +1,8 @@
 import fs from "fs";
 import util from "util";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTransactions } from "../../deploymentHelpers";
-import { aggregate3InChunks, getMulticall3 } from "../../multicall";
+import { proposeTransactions } from "../../helpers/safe";
+import { aggregate3InChunks, getMulticall3 } from "../../helpers/multicall";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../types";
 import { TDeployedAsset } from "./oracles/oracleTypes";
 import { TAssetConfig } from "./oracles/oracleTypes";

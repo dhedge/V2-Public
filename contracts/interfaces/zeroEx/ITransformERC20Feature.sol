@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 /// @dev Feature to composably transform between ERC20 tokens.
 interface ITransformERC20Feature {

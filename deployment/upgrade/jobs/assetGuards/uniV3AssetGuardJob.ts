@@ -1,7 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 import { AssetType } from "../assetsJob";
 
 export const uniV3AssetGuardJob: IJob<void> = async (

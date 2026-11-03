@@ -17,7 +17,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";

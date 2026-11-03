@@ -1,7 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx } from "../../../deploymentHelpers";
-import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
-import { WhitelistSettingStruct } from "../../../../types/EasySwapperV2";
+import { proposeTx } from "../../../helpers/safe";
+import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions, WhitelistSettingStruct } from "../../../types";
 
 export const easySwapperV2ConfigurationJob: IJob<void> = async (
   config: IUpgradeConfig,

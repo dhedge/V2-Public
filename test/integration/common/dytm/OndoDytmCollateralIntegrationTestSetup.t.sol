@@ -3,8 +3,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
@@ -23,6 +23,7 @@ import {IGMTokenManager} from "contracts/interfaces/ondo/IGMTokenManager.sol";
 import {OndoGMSwapTestSetup} from "test/integration/common/ondo/OndoGMSwapTestSetup.t.sol";
 import {IMarketConfig} from "test/integration/common/dytm/dytmInterface/IDytmMarketConfig.sol";
 import {IDytmAddressAccountBaseWhitelist} from "test/integration/common/dytm/dytmInterface/IDytmAddressAccountBaseWhitelist.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 /// @title OndoDytmCollateralIntegrationTestSetup
 /// @notice Shared setup for integration tests that exercise the DYTM dispatcher → Ondo unwind
@@ -181,7 +182,7 @@ abstract contract OndoDytmCollateralIntegrationTestSetup is OndoGMSwapTestSetup 
         INITIALIZE_ORACLE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           SP_USER_ID,
           uint256(3600), // maxProofAge
           uint256(1000), // sanityDeviationBps (10%)

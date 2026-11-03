@@ -6,10 +6,9 @@ pragma abicoder v2;
 import {DytmTestSetup} from "test/integration/common/dytm/DytmTestSetup.t.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 library DytmTestArbitrumSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 437520103;
-
   address public constant DYTM_OFFICE = 0x0fF1CEE337d7af25eEF4c1a7A2CaF83f98d80001;
   address public constant DYTM_PERIPHERY = 0x1FBe7Bb394BE505C08e9ee419Dd166c71004e51B;
   address public constant DYTM_ACCOUNT_SPLITTER_AND_MERGER = 0xCa52E5c2FBa054059Bc0F25AcFEB365e683C9c31;
@@ -21,8 +20,12 @@ library DytmTestArbitrumSharedData {
   uint88 public constant DYTM_MARKET_ID = 1;
 }
 
+/// @dev Isolated so every top-level call in `setUp` and in a test is its own transaction: the setup approves
+///      via `execTransaction` and then deposits into the same pool, which `ValueManipulationCheck` rejects
+///      within one transaction. Production always sees these as separate transactions.
+/// forge-config: default.isolate = true
 contract DytmTestArbitrum is DytmTestSetup, ArbitrumSetup {
-  constructor() DytmTestSetup(_createDytmTestConfig()) ArbitrumSetup(DytmTestArbitrumSharedData.FORK_BLOCK_NUMBER) {}
+  constructor() DytmTestSetup(_createDytmTestConfig()) ArbitrumSetup(ForkBlocks.ARBITRUM) {}
 
   function setUp() public virtual override(DytmTestSetup, ArbitrumSetup) {
     super.setUp();

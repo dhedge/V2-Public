@@ -2,8 +2,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IGMTokenManager} from "contracts/interfaces/ondo/IGMTokenManager.sol";
@@ -11,6 +11,7 @@ import {IOndoAttestationOracle} from "contracts/interfaces/ondo/IOndoAttestation
 import {OndoGMSwapContractGuard} from "contracts/guards/contractGuards/ondo/OndoGMSwapContractGuard.sol";
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
 import {OndoGMSwapTestSetup} from "test/integration/common/ondo/OndoGMSwapTestSetup.t.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 contract OndoGMSwapTestEthereum is OndoGMSwapTestSetup, EthereumSetup {
   constructor() EthereumSetup(24724485) OndoGMSwapTestSetup() {}
@@ -42,7 +43,7 @@ contract OndoGMSwapTestEthereum is OndoGMSwapTestSetup, EthereumSetup {
     (bool success, bytes memory data) = ondoGMSwap.staticcall(abi.encodeWithSignature("gmTokenManager()"));
     require(success, "gmTokenManager() call failed");
     address gm = abi.decode(data, (address));
-    assertEq(gm, GM_TOKEN_MANAGER);
+    assertEq(gm, EthereumConfig.ONDO_GM_TOKEN_MANAGER);
   }
 
   function test_revert_initialize_zeroPoolFactory() public {
@@ -54,7 +55,7 @@ contract OndoGMSwapTestEthereum is OndoGMSwapTestSetup, EthereumSetup {
         "initialize(address,address,address,address)",
         owner,
         address(0),
-        GM_TOKEN_MANAGER,
+        EthereumConfig.ONDO_GM_TOKEN_MANAGER,
         usdcData.asset
       )
     );
@@ -86,7 +87,7 @@ contract OndoGMSwapTestEthereum is OndoGMSwapTestSetup, EthereumSetup {
         "initialize(address,address,address,address)",
         owner,
         address(poolFactoryProxy),
-        GM_TOKEN_MANAGER,
+        EthereumConfig.ONDO_GM_TOKEN_MANAGER,
         address(0)
       )
     );
@@ -100,7 +101,7 @@ contract OndoGMSwapTestEthereum is OndoGMSwapTestSetup, EthereumSetup {
         "initialize(address,address,address,address)",
         owner,
         address(poolFactoryProxy),
-        GM_TOKEN_MANAGER,
+        EthereumConfig.ONDO_GM_TOKEN_MANAGER,
         usdcData.asset
       )
     );
@@ -155,7 +156,7 @@ contract OndoGMSwapTestEthereum is OndoGMSwapTestSetup, EthereumSetup {
     testPool.execTransaction(ondoGMSwap, _encodeMintSwapData(MINT_AMOUNT_IN, MINT_EXPECTED_OUTPUT));
 
     // USDC approval to GMTokenManager should remain at max (set in constructor)
-    uint256 allowance = IERC20(usdcData.asset).allowance(ondoGMSwap, GM_TOKEN_MANAGER);
+    uint256 allowance = IERC20(usdcData.asset).allowance(ondoGMSwap, EthereumConfig.ONDO_GM_TOKEN_MANAGER);
     assertGt(allowance, 0);
   }
 
@@ -166,7 +167,7 @@ contract OndoGMSwapTestEthereum is OndoGMSwapTestSetup, EthereumSetup {
     testPool.execTransaction(ondoGMSwap, _encodeRedeemSwapData(REDEEM_AMOUNT_IN, REDEEM_MIN_RECEIVE));
 
     // Ondo asset approval to GMTokenManager should be reset to 0
-    uint256 allowance = IERC20(GOOGLON).allowance(ondoGMSwap, GM_TOKEN_MANAGER);
+    uint256 allowance = IERC20(GOOGLON).allowance(ondoGMSwap, EthereumConfig.ONDO_GM_TOKEN_MANAGER);
     assertEq(allowance, 0);
   }
 

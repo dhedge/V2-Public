@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { TAssetConfig, IPendlePTPriceAggregatorConfig } from "./oracleTypes";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { Address } from "../../../types";
 
 // PendleOracleType.PT_TO_SY — prices PT in terms of the SY token, which is a 1:1 wrap of the yield token

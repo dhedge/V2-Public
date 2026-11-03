@@ -2,9 +2,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SignedSafeMath} from "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
 
 import {IGuard} from "../../../../interfaces/guards/IGuard.sol";
 import {IDelayedOrder} from "../../../../interfaces/flatMoney/IDelayedOrder.sol";

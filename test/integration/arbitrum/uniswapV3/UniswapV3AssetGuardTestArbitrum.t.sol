@@ -5,6 +5,7 @@ pragma abicoder v2;
 import {UniswapV3AssetGuardTestSetup} from "test/integration/common/uniswapV3/UniswapV3AssetGuardTestSetup.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 import {ArbitrumSetup} from "test/integration/utils/foundry/chains/ArbitrumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @notice Runs the UniswapV3AssetGuard valuation suite against an Arbitrum fork. This suite enables
 /// the position NFT on its vault from the start, so it needs its own vault and cannot share the one
@@ -24,7 +25,7 @@ contract UniswapV3AssetGuardTestArbitrum is UniswapV3AssetGuardTestSetup, Arbitr
         oneUnsupportedFee: 500 // WBTC/WETH
       })
     )
-    ArbitrumSetup(489036888)
+    ArbitrumSetup(ForkBlocks.ARBITRUM)
   {}
 
   function setUp() public override(UniswapV3AssetGuardTestSetup, ArbitrumSetup) {

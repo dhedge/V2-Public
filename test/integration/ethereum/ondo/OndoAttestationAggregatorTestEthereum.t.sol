@@ -7,11 +7,12 @@ import {IGMTokenManager} from "contracts/interfaces/ondo/IGMTokenManager.sol";
 import {OndoAttestationOracleTestSetup} from "test/integration/common/ondo/OndoAttestationOracleTestSetup.t.sol";
 import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract OndoAttestationAggregatorTestEthereum is OndoAttestationOracleTestSetup, EthereumSetup {
   address public aggregator;
 
-  constructor() EthereumSetup(24875501) OndoAttestationOracleTestSetup() {}
+  constructor() EthereumSetup(ForkBlocks.ETHEREUM) OndoAttestationOracleTestSetup() {}
 
   function setUp() public override(OndoAttestationOracleTestSetup, EthereumSetup) {
     EthereumSetup.setUp();

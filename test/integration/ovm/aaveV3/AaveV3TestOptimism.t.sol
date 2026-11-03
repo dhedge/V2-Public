@@ -6,16 +6,10 @@ pragma abicoder v2;
 import {AaveV3TestSetup} from "test/integration/common/aaveV3/AaveV3TestSetup.t.sol";
 import {OptimismSetup} from "test/integration/utils/foundry/chains/OptimismSetup.t.sol";
 import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
-
-library AaveV3TestOptimismSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 139400000;
-}
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3TestOptimism is AaveV3TestSetup, OptimismSetup {
-  constructor()
-    AaveV3TestSetup(_createAaveV3TestConfig())
-    OptimismSetup(AaveV3TestOptimismSharedData.FORK_BLOCK_NUMBER)
-  {}
+  constructor() AaveV3TestSetup(_createAaveV3TestConfig()) OptimismSetup(ForkBlocks.OPTIMISM) {}
 
   function setUp() public virtual override(AaveV3TestSetup, OptimismSetup) {
     super.setUp();
@@ -28,13 +22,14 @@ contract AaveV3TestOptimism is AaveV3TestSetup, OptimismSetup {
     config.uniV3Router = OptimismConfig.UNISWAP_V3_ROUTER;
     config.uniV2LikeRouters = _getV2Routers();
     config.token0ToLend = OptimismConfig.WETH;
-    config.token1ToLend = OptimismConfig.DAI;
+    // Aave froze the DAI reserve on this chain (low-adoption deprecation), so the second lend asset is WBTC.
+    config.token1ToLend = OptimismConfig.WBTC;
     config.tokenToBorrow = OptimismConfig.USDC;
     config.token0AmountNormalized = 1;
-    config.token1AmountNormalized = 1000;
+    config.token1AmountNormalized = 1;
     config.tokenToBorrowAmountNormalized = 1000;
     config.token0Oracle = OptimismConfig.WETH_CHAINLINK_ORACLE;
-    config.token1Oracle = OptimismConfig.DAI_CHAINLINK_ORACLE;
+    config.token1Oracle = OptimismConfig.WBTC_CHAINLINK_ORACLE;
     config.tokenToBorrowOracle = OptimismConfig.USDC_CHAINLINK_ORACLE;
     config.isL2 = true;
   }

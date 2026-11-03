@@ -8,7 +8,7 @@ import {IPancakeCLPool} from "../../../interfaces/pancake/IPancakeCLPool.sol";
 import {IPancakeNonfungiblePositionManager} from "../../../interfaces/pancake/IPancakeNonfungiblePositionManager.sol";
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import {ClosedAssetGuard} from "../ClosedAssetGuard.sol";
 import {IHasAssetInfo} from "../../../interfaces/IHasAssetInfo.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";

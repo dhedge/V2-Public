@@ -6,7 +6,6 @@ import {SafeERC20} from "../../../utils/SafeERC20.sol";
 import {IERC20} from "../../../interfaces/IERC20.sol";
 
 import {OndoGMTokenAssetGuard} from "../../../guards/assetGuards/ondo/OndoGMTokenAssetGuard.sol";
-import {SynthetixPerpsV2MarketAssetGuard} from "../../../guards/assetGuards/SynthetixPerpsV2MarketAssetGuard.sol";
 import {PancakeNonfungiblePositionGuard} from "../../../guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol";
 import {ICompoundV3Comet} from "../../../interfaces/compound/ICompoundV3Comet.sol";
 import {IPancakeNonfungiblePositionManager} from "../../../interfaces/pancake/IPancakeNonfungiblePositionManager.sol";
@@ -23,10 +22,6 @@ import "../../../interfaces/pendle/IPAllActionTypeV3.sol" as IPAllActionTypeV3;
 
 library SwapperV2Helpers {
   using SafeERC20 for IERC20;
-
-  function synthetixPerpsV2Helper(address _asset, address _poolFactory) internal view returns (address sUSDAddress) {
-    sUSDAddress = SynthetixPerpsV2MarketAssetGuard(IHasGuardInfo(_poolFactory).getAssetGuard(_asset)).susdProxy();
-  }
 
   /// @dev Ondo GM token (assetType 41) is redeemed to USDC inside the asset guard's
   ///      `withdrawProcessing`. The vault tracks USDC, resolved on-chain from the asset guard
@@ -46,13 +41,19 @@ library SwapperV2Helpers {
     return uint160(_asset) >= baseSystemAddress && uint160(_asset) < baseSystemAddress + 10_000;
   }
 
+  /// @dev A dHEDGE vault pays its EasySwapperV2 "asset" out of both of its WithdrawalVaults: the
+  ///      single-asset one and the one fed by executed limit orders. Both must be tracked.
   function getUnrolledAssets(address _asset, address _dHedgeVault) internal view returns (address[] memory assets) {
     IWithdrawalVault.TrackedAsset[] memory trackedAssets = IEasySwapperV2(_asset).getTrackedAssets(_dHedgeVault);
-    uint256 assetsLength = trackedAssets.length;
-    assets = new address[](assetsLength);
+    IWithdrawalVault.TrackedAsset[] memory trackedFromLimitOrders = IEasySwapperV2(_asset)
+      .getTrackedAssetsFromLimitOrders(_dHedgeVault);
+    assets = new address[](trackedAssets.length + trackedFromLimitOrders.length);
 
-    for (uint256 i; i < assetsLength; ++i) {
+    for (uint256 i; i < trackedAssets.length; ++i) {
       assets[i] = trackedAssets[i].token;
+    }
+    for (uint256 i; i < trackedFromLimitOrders.length; ++i) {
+      assets[trackedAssets.length + i] = trackedFromLimitOrders[i].token;
     }
   }
 

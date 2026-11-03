@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity 0.8.28;
 
-import {SafeCast} from "@openzeppelin/v5/contracts/utils/math/SafeCast.sol";
-import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/EnumerableSet.sol";
-import {DoubleEndedQueue} from "@openzeppelin/v5/contracts/utils/structs/DoubleEndedQueue.sol";
-import {Heap} from "@openzeppelin/v5/contracts/utils/structs/Heap.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
+import {Heap} from "@openzeppelin/contracts/utils/structs/Heap.sol";
 
 import {PrecompileLib} from "../lib/PrecompileLib.sol";
 import {HLConstants} from "../lib/CoreWriterLib.sol";

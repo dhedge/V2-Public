@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { TAssetConfig, IFlatMoneyUNITPriceAggregatorConfig } from "./oracleTypes";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { Address } from "../../../types";
 
 const validateAssetConfig = (assetConfig: TAssetConfig): assetConfig is IFlatMoneyUNITPriceAggregatorConfig => {

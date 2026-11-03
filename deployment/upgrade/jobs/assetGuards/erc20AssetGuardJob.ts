@@ -1,10 +1,29 @@
+import fs from "fs";
+import csv from "csvtojson";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
-import { addOrReplaceGuardInFile } from "../helpers";
-import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
+import { IDeployedAssetGuard, IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 import { AssetType } from "../assetsJob";
+import { TAssetConfig } from "../oracles/oracleTypes";
 
-const ASSET_TYPES_TO_SET_GUARAD_TO = [AssetType["Chainlink direct USD price feed with 8 decimals"]];
+/// Asset types a new ERC20Guard deployment must be registered for: every type mapped to
+/// ERC20Guard in the asset guards CSV that still has assets in the assets JSON, plus type 0,
+/// which PoolLogicLib reads directly as the fallback guard for any unregistered asset.
+const resolveErc20GuardAssetTypes = async (filenames: IFileNames): Promise<number[]> => {
+  const csvAssetGuards: IDeployedAssetGuard[] = await csv().fromFile(filenames.assetGuardsFileName);
+  const assets: TAssetConfig[] = JSON.parse(fs.readFileSync(filenames.assetsFileName, "utf-8"));
+  const assetTypesInUse = new Set<number>(assets.map((asset) => Number(asset.assetType)));
+
+  const assetTypes = new Set<number>([AssetType["Chainlink direct USD price feed with 8 decimals"]]);
+  for (const csvAssetGuard of csvAssetGuards) {
+    if (csvAssetGuard.guardName === "ERC20Guard" && assetTypesInUse.has(Number(csvAssetGuard.assetType))) {
+      assetTypes.add(Number(csvAssetGuard.assetType));
+    }
+  }
+  return [...assetTypes].sort((a, b) => a - b);
+};
 
 export const erc20GuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -30,7 +49,9 @@ export const erc20GuardJob: IJob<void> = async (
 
     const governance = await ethers.getContractAt("Governance", versions[config.oldTag].contracts.Governance);
 
-    for (const assetType of ASSET_TYPES_TO_SET_GUARAD_TO) {
+    const assetTypesToSetGuardTo = await resolveErc20GuardAssetTypes(filenames);
+
+    for (const assetType of assetTypesToSetGuardTo) {
       const existingAssetGuardAddress = await governance.assetGuards(assetType);
 
       // If the asset guard is not set, set it

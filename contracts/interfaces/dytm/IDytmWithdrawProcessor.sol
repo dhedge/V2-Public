@@ -14,8 +14,9 @@ interface IDytmWithdrawProcessor {
   /// @notice Full payload for one unwind. `dytmOffice`, `pool` and `splitPositions` are supplied
   ///         by the calling lib (runtime context); `actions` and `outputAsset` come from the
   ///         user-supplied `DytmWithdrawLib.UnwindPlan` in `ComplexAsset.withdrawData`.
-  /// @dev    `pool` is where the processor returns any sub-$1 GM dust remnant a split account
-  ///         can't be fully drained of (Ondo rejects sub-$1 attestation swaps).
+  /// @dev    `pool` receives any sub-$1 GM dust remnant a split account can't be drained of, plus
+  ///         every leftover the plan does not consume.
+  /// @dev    `outputAsset` is the caller's accounting field; the processor settles in `usdc()`.
   struct UnwindPlanRequest {
     address dytmOffice;
     address pool;
@@ -28,7 +29,7 @@ interface IDytmWithdrawProcessor {
   /// @dev    Caller must be a `WithdrawalVault` registered with `easySwapperV2`. The caller must
   ///         have already transferred the split DYTM accounts (matching `splitPositions`) to the
   ///         processor before calling.
-  /// @return received  `outputAsset` gain produced by the unwind, transferred back to the caller.
+  /// @return received  `usdc()` produced by the unwind, transferred back to the caller.
   function process(UnwindPlanRequest calldata params) external returns (uint256 received);
 
   /// @notice Canonical settlement token enforced by `DytmWithdrawLib` as `plan.outputAsset`.

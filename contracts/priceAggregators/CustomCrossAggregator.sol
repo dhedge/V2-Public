@@ -2,7 +2,7 @@
 
 pragma solidity 0.7.6;
 
-import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import {SignedSafeMath} from "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
 
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 

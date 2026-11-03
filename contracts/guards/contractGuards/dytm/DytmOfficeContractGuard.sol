@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {Ownable} from "@openzeppelin/v5/contracts/access/Ownable.sol";
-import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/EnumerableSet.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";

@@ -10,6 +10,7 @@ library EthereumConfig {
 
   // dHEDGE Contracts
   address public constant POOL_FACTORY_PROD = 0x96D33bCF84DdE326014248E2896F79bbb9c13D6d;
+  address public constant EASY_SWAPPER_V2_PROD = 0xbDd84294bC8299861A2121F749A25EFEb7168a32;
   address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x1C6cC699FD73964F32c55Fe3208D47158Bfad8Cd;
   address public constant USD_PRICE_AGGREGATOR_PROD = 0x4D4010338beD13483CC85de051d28d2B4f3b6484;
 
@@ -65,6 +66,9 @@ library EthereumConfig {
   address public constant ONE_INCH_V6_ROUTER = 0x111111125421cA6dc452d289314280a0f8842A65; // Same for all chains
   address public constant ANGLE_DISTRIBUTOR_CONTRACT = 0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae; // Same for all chains
   address public constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3; // Same for all chains
+
+  // DYTM
+  address public constant DYTM_OFFICE = 0x0ff1ceB93DbADfB13722058D60c4B8cD122b06ea;
 
   // Ondo
   address public constant ONDO_GM_TOKEN_MANAGER = 0x2c158BC456e027b2AfFCCadF1BDBD9f5fC4c5C8c;

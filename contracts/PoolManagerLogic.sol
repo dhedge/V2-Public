@@ -18,9 +18,9 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {Initializable} from "@openzeppelin/v3/contracts-upgradeable/proxy/Initializable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/v3/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "./interfaces/IPoolManagerLogic.sol";

@@ -17,7 +17,7 @@
 
 pragma solidity 0.8.28;
 
-import {Initializable} from "@openzeppelin/v5/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IManaged} from "../interfaces/IManaged.sol";
 import {IPoolLogic} from "../interfaces/IPoolLogic.sol";

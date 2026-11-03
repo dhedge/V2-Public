@@ -8259,6 +8259,111 @@
           ]
         }
       }
+    },
+    "a15f078bdb86ea11f8f77e6618bfc5c1dd161d77ce51428234cc12a596a34c65": {
+      "address": "0x730e6E2B507D4048135DDf35333eCCb1b9c0B9C6",
+      "txHash": "0x88a30c1f93e115fe4df89358c415ef32c164d76494ff1fb1833ba6f0ab1c515b",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/v3/contracts-upgradeable/proxy/Initializable.sol:25"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/v3/contracts-upgradeable/proxy/Initializable.sol:30"
+          },
+          {
+            "label": "depositor",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "WithdrawalVault",
+            "src": "contracts/swappers/easySwapperV2/WithdrawalVault.sol:37"
+          },
+          {
+            "label": "creator",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "WithdrawalVault",
+            "src": "contracts/swappers/easySwapperV2/WithdrawalVault.sol:39"
+          },
+          {
+            "label": "srcAssets",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_struct(AddressSet)4052_storage",
+            "contract": "WithdrawalVault",
+            "src": "contracts/swappers/easySwapperV2/WithdrawalVault.sol:42"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AddressSet)4052_storage": {
+            "label": "struct EnumerableSetUpgradeable.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)3787_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Set)3787_storage": {
+            "label": "struct EnumerableSetUpgradeable.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {}
+      }
     }
   }
 }

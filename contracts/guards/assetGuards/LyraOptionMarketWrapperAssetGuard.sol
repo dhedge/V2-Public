@@ -34,8 +34,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/token/ERC721/IERC721.sol";
 
 import "./ClosedAssetGuard.sol";
 import "../contractGuards/LyraOptionMarketWrapperContractGuard.sol";

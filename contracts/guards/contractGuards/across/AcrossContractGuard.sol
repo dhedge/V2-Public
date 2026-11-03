@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IGuard} from "../../../interfaces/guards/IGuard.sol";
 import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IViewer} from "../interfaces/flatMoney/IViewer.sol";
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";

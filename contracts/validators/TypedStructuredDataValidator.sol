@@ -17,8 +17,8 @@
 
 pragma solidity 0.8.28;
 
-import {OwnableUpgradeable} from "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/EnumerableSet.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IDataValidator} from "../interfaces/IDataValidator.sol";
 import {IPoolFactory} from "../interfaces/IPoolFactory.sol";

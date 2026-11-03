@@ -94,6 +94,7 @@ export const polygonProdData: IAddresses = {
   assets: {
     nativeAssetWrapper: assets.wmatic,
     usdc: assets.usdc,
+    usdcNative: assets.usdcNative,
     dht: assets.dht,
   },
 

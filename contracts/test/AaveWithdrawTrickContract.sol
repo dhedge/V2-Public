@@ -9,8 +9,8 @@ import {IPoolLogic} from "../interfaces/IPoolLogic.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 // Aliased so SafeERC20 can drive the transfers: the debt asset is USDT on some fixtures, whose
 // transfer returns no value and reverts the strict IERC20 above while decoding.
-import {IERC20 as IERC20OZ} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {IERC20 as IERC20OZ} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/v3/contracts/token/ERC20/SafeERC20.sol";
 
 interface IAggregationRouterV6 {
   struct SwapDescription {

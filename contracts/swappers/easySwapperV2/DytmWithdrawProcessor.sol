@@ -2,8 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {Ownable} from "@openzeppelin/v3/contracts/access/Ownable.sol";
 
 import {SafeERC20} from "../../utils/SafeERC20.sol";
 import {IERC20} from "../../interfaces/IERC20.sol";
@@ -23,13 +22,12 @@ import {DytmWithdrawLib} from "./libraries/dytm/DytmWithdrawLib.sol";
 /// @title DytmWithdrawProcessor
 /// @notice Runs the user's DYTM unwind plan. A `WithdrawalVault` transfers the freshly-split DYTM
 ///         accounts here, the processor delegates back into DYTM, enforces the drained-account
-///         post-condition, and returns the `outputAsset` gain to the vault.
+///         post-condition, and returns the `usdc` it produced to the vault.
 /// @dev    Auth: `caller.depositor()` is cross-checked against `easySwapperV2`'s vault registry.
 /// @dev    DEPLOYMENT NOTE: Re-deploying requires re-deploying `DytmOfficeAssetGuard` (stores
 ///         processor as immutable) and updating `OndoGMSwap.setAuthorizedCaller`.
 contract DytmWithdrawProcessor is IDytmDelegatee, IDytmWithdrawProcessor, Ownable, TxDataUtils {
   using SafeERC20 for IERC20;
-  using SafeMath for uint256;
   using AddressHelper for address;
 
   /// @notice EasySwapperV2 used to authorise WithdrawalVault callers of `process`.
@@ -54,12 +52,13 @@ contract DytmWithdrawProcessor is IDytmDelegatee, IDytmWithdrawProcessor, Ownabl
   function process(UnwindPlanRequest calldata params) external override returns (uint256 received) {
     require(_isAuthorizedVault(msg.sender), "unauthorized vault");
 
-    uint256 balanceBefore = IERC20(params.outputAsset).balanceOf(address(this));
+    // Start from zero so this unwind can neither be credited with nor reach a past one's leftover.
+    _sweepToPool(usdc, params.pool);
 
     IDytmOffice(params.dytmOffice).delegationCall(
       DytmParamStructs.DelegationCallParams({
         delegatee: IDytmDelegatee(address(this)),
-        callbackData: abi.encode(params.actions)
+        callbackData: abi.encode(params.pool, params.actions)
       })
     );
 
@@ -78,10 +77,10 @@ contract DytmWithdrawProcessor is IDytmDelegatee, IDytmWithdrawProcessor, Ownabl
       }
     }
 
-    // Forward the `outputAsset` gain produced by the unwind back to the caller; the caller
-    // (`WithdrawalVault`) is the authority on the slippage floor.
-    received = IERC20(params.outputAsset).balanceOf(address(this)).sub(balanceBefore);
-    IERC20(params.outputAsset).safeTransfer(msg.sender, received);
+    // The whole balance is this unwind's, since the pre-existing one went to the pool above. The
+    // caller (`WithdrawalVault`) is the authority on the slippage floor.
+    received = IERC20(usdc).balanceOf(address(this));
+    IERC20(usdc).safeTransfer(msg.sender, received);
   }
 
   /// @notice An allowance the plan granted that needs to be zeroed at end of `onDelegationCallback`.
@@ -90,26 +89,39 @@ contract DytmWithdrawProcessor is IDytmDelegatee, IDytmWithdrawProcessor, Ownabl
     address spender;
   }
 
-  /// @notice DYTM Office callback. Runs the user's action sequence and zeros every allowance the
-  ///         plan granted so the shared processor never carries persistent state between unwinds.
+  /// @notice DYTM Office callback: empty every token the plan approves, run the plan, then zero the
+  ///         allowances and give the pool what the plan did not consume.
+  /// @dev    The processor is shared, so it can be holding an earlier unwind's tokens. Emptying
+  ///         those first leaves a plan nothing to spend but its own inflow. Approving is the only
+  ///         way a plan can move tokens from here, so the approved set is everything it can reach.
   function onDelegationCallback(bytes calldata _callbackData) external override returns (bytes memory) {
     PoolLogicLib.validateDelegationCallback(dHedgePoolFactory, msg.sender, address(this));
-    DytmWithdrawLib.Action[] memory actions = abi.decode(_callbackData, (DytmWithdrawLib.Action[]));
+    (address pool, DytmWithdrawLib.Action[] memory actions) = abi.decode(
+      _callbackData,
+      (address, DytmWithdrawLib.Action[])
+    );
 
+    // Pass 1 — validate each action, empty each approved token.
     PendingApproval[] memory pending = new PendingApproval[](actions.length);
     uint256 pendingCount;
-
     for (uint256 i; i < actions.length; ++i) {
       address spender = _checkAction(actions[i]);
       if (spender != address(0)) {
+        _sweepPlanLeftover(actions[i].to, pool);
         pending[pendingCount++] = PendingApproval({token: actions[i].to, spender: spender});
       }
+    }
+
+    // Pass 2 — run the plan.
+    for (uint256 i; i < actions.length; ++i) {
       actions[i].to.tryAssemblyCall(actions[i].data);
     }
 
-    // Zero every allowance the plan granted so nothing persists between unwinds.
+    // Pass 3 — zero each allowance, and give the pool what the plan left behind: typically the GM
+    // slice the signed Ondo quote was not sized to sell.
     for (uint256 i; i < pendingCount; ++i) {
       IERC20(pending[i].token).safeApprove(pending[i].spender, 0);
+      _sweepPlanLeftover(pending[i].token, pool);
     }
     return "";
   }
@@ -119,6 +131,7 @@ contract DytmWithdrawProcessor is IDytmDelegatee, IDytmWithdrawProcessor, Ownabl
   ///        - `transfer` / `transferFrom`: blocked.
   ///        - `approve` / `increaseAllowance`: spender returned so the caller can zero the
   ///          allowance post-unwind.
+  ///      Out of scope: ERC777 operators, and tokens whose `approve` uses another selector.
   function _checkAction(DytmWithdrawLib.Action memory action) private view returns (address spender) {
     require(action.to != address(this), "self-call blocked");
     if (action.data.length < 4) return address(0);
@@ -131,9 +144,9 @@ contract DytmWithdrawProcessor is IDytmDelegatee, IDytmWithdrawProcessor, Ownabl
     }
   }
 
-  /// @notice Recover dust accumulated from imperfect unwinds (rounding remainders, untracked
-  ///         intermediate tokens). Drained DYTM account NFTs that pile up here are inert (no
-  ///         collateral, no debt) so they don't need a dedicated rescue path.
+  /// @notice Recover a leftover of a token no plan approves (a stranded intermediate, an unsolicited
+  ///         transfer); approved tokens never accumulate — `onDelegationCallback` sends them to the
+  ///         pool. Drained DYTM account NFTs left here are inert, so need no rescue path.
   function rescueToken(address token, uint256 amount, address recipient) external onlyOwner {
     require(recipient != address(0), "invalid recipient");
     IERC20(token).safeTransfer(recipient, amount);
@@ -149,6 +162,20 @@ contract DytmWithdrawProcessor is IDytmDelegatee, IDytmWithdrawProcessor, Ownabl
         easySwapperV2.limitOrderContracts(vaultDepositor) == caller;
     } catch {
       return false;
+    }
+  }
+
+  /// @dev Skips `usdc`: `process` zeroes it before the plan and forwards the rest to the vault.
+  function _sweepPlanLeftover(address _token, address _pool) private {
+    if (_token != usdc) {
+      _sweepToPool(_token, _pool);
+    }
+  }
+
+  function _sweepToPool(address _token, address _pool) private {
+    uint256 balance = IERC20(_token).balanceOf(address(this));
+    if (balance > 0) {
+      IERC20(_token).safeTransfer(_pool, balance);
     }
   }
 }

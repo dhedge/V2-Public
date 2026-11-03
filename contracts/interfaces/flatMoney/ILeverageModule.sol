@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol";
+import {IERC721Enumerable} from "@openzeppelin/v3/contracts/token/ERC721/IERC721Enumerable.sol";
 
 import {IFlatcoinVault} from "./IFlatcoinVault.sol";
 import {IDelayedOrder} from "./IDelayedOrder.sol";

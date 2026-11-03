@@ -16,12 +16,12 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "./ClosedAssetGuard.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
 import "../../interfaces/synthetix/IPerpsV2Market.sol";
 import "../../interfaces/synthetix/IPerpsV2MarketSettings.sol";
 import "../../interfaces/synthetix/IAddressResolver.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 /// @title PerpsV2Market (Synthetix) Asset Guard
 /// @dev Asset type = 102

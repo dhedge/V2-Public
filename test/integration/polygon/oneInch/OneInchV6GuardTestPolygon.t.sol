@@ -8,6 +8,7 @@ import {IUniswapV2Factory} from "contracts/interfaces/uniswapV2/IUniswapV2Factor
 import {OneInchV6GuardTestSetup} from "test/integration/common/oneInch/OneInchV6GuardTestSetup.t.sol";
 import {PolygonConfig} from "test/integration/utils/foundry/config/PolygonConfig.sol";
 import {PolygonSetup} from "test/integration/utils/foundry/chains/PolygonSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @notice Polygon is the only chain whose guard is deployed with a QuickSwap factory, so it is the
 /// only place the QuickSwap branch of the Uniswap V2 pool check can be exercised.
@@ -21,7 +22,7 @@ contract OneInchV6GuardTestPolygon is OneInchV6GuardTestSetup, PolygonSetup {
       IUniswapV3Factory(PolygonConfig.UNISWAP_V3_FACTORY),
       QUICKSWAP_V2_FACTORY
     )
-    PolygonSetup(93443000)
+    PolygonSetup(ForkBlocks.POLYGON)
   {}
 
   function setUp() public override(OneInchV6GuardTestSetup, PolygonSetup) {

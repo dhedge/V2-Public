@@ -18,12 +18,12 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/introspection/IERC165Upgradeable.sol";
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IERC165Upgradeable} from "@openzeppelin/v3/contracts-upgradeable/introspection/IERC165Upgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/v3/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/v3/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC721ReceiverUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {IFlashLoanReceiver} from "./interfaces/aave/IFlashLoanReceiver.sol";
 import {IAaveLendingPoolAssetGuard} from "./interfaces/guards/IAaveLendingPoolAssetGuard.sol";

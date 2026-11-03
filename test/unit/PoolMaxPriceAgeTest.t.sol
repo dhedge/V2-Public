@@ -4,7 +4,6 @@ pragma abicoder v2;
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
-import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
 import {PoolUnitTestSetup} from "test/unit/PoolUnitTestSetup.t.sol";
 
@@ -14,24 +13,7 @@ contract PoolMaxPriceAgeTest is PoolUnitTestSetup {
   function setUp() public override {
     super.setUp();
 
-    IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](1);
-    supportedAssets[0] = IHasSupportedAsset.Asset({asset: address(usdc), isDeposit: true});
-
-    vm.prank(manager);
-    testPool = PoolLogic(
-      poolFactoryProxy.createFund({
-        _privatePool: false,
-        _manager: manager,
-        _managerName: "Manager",
-        _fundName: "MaxPriceAge Test Vault",
-        _fundSymbol: "MPATV",
-        _performanceFeeNumerator: 0,
-        _managerFeeNumerator: 0,
-        _entryFeeNumerator: 0,
-        _exitFeeNum: 0,
-        _supportedAssets: supportedAssets
-      })
-    );
+    testPool = _createFund(_toSupportedAssets(address(usdc), true));
   }
 
   /// @dev Mock the USDC aggregator to return a price updated at the given timestamp.

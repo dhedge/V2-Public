@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.7.6 <0.9.0;
+pragma solidity 0.8.28;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/v5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {CoreBackboneSetup, IChangeAssets} from "test/integration/utils/foundry/CoreBackboneSetup.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
@@ -22,6 +22,7 @@ import {IHyperliquidCoreWriterContractGuard} from "contracts/interfaces/hyperliq
 
 import {CoreSimulatorLib} from "test/integration/hyperevm/test-suite/hyperevm-lib/CoreSimulatorLib.sol";
 import {HyperCore} from "test/integration/hyperevm/test-suite/hyperevm-lib/HyperCore.sol";
+import {PrecompileLib} from "test/integration/hyperevm/test-suite/hyperevm-lib/lib/PrecompileLib.sol";
 import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConfig.sol";
 
 import {HyperliquidSpotPriceAggregator} from "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol";
@@ -66,6 +67,12 @@ abstract contract HyperliquidTestSetup is CoreBackboneSetup {
   address public constant usdc = HyperEVMConfig.USDC_TOKEN_ADDRESS;
   address public constant xaut = HyperEVMConfig.XAUT0_TOKEN_ADDRESS;
 
+  /// @dev xyz:GOLD (asset ID 110003), the perp the XAUT0 spot price is checked against.
+  uint32 public constant XAUT0_REFERENCE_PERP_INDEX = 10003;
+  uint256 public constant XAUT0_MAX_DEVIATION_BPS = 300;
+  /// @dev $2800 in spot price precompile format: (8 - szDecimals=2) = 6 decimals.
+  uint64 public constant XAUT0_TEST_PX = 2800e6;
+
   /////////////////////////////////////////////
   //           Integration Deployment        //
   /////////////////////////////////////////////
@@ -79,7 +86,10 @@ abstract contract HyperliquidTestSetup is CoreBackboneSetup {
     governance.setAssetGuard(uint16(AssetTypeIncomplete.CHAINLINK), hyperliquidERC20Guard);
 
     // Deploy HyperliquidCoreWriterContractGuard implementation
-    address coreWriterGuardImplementation = deployCode("HyperliquidCoreWriterContractGuard.sol");
+    address coreWriterGuardImplementation = deployCode(
+      "HyperliquidCoreWriterContractGuard.sol",
+      abi.encode(slippageAccumulator)
+    );
 
     // Encode the initialize call for the proxy
     // maxSlippagePerSpotTrade = 2% (in WAD format)
@@ -124,7 +134,12 @@ abstract contract HyperliquidTestSetup is CoreBackboneSetup {
 
     // Deploy price aggregator for XAUT0
     xaut0PriceAggregator = address(
-      new HyperliquidSpotPriceAggregator(HyperEVMConfig.XAUT0_SPOT_INDEX, HyperEVMConfig.USDC_USD_PRICE_FEED)
+      new HyperliquidSpotPriceAggregator(
+        HyperEVMConfig.XAUT0_SPOT_INDEX,
+        HyperEVMConfig.USDC_USD_PRICE_FEED,
+        XAUT0_REFERENCE_PERP_INDEX,
+        XAUT0_MAX_DEVIATION_BPS
+      )
     );
 
     // Add XAUT0 system address as an asset (type 40 - HYPERLIQUID_SPOT)
@@ -147,6 +162,11 @@ abstract contract HyperliquidTestSetup is CoreBackboneSetup {
     super.setUp();
 
     deployIntegration();
+
+    // Pin the XAUT0 spot price and the gold oracle it is checked against to the same $2800, so the spot price
+    // aggregator prices XAUT0 unless a test moves one of them.
+    hyperCore.setSpotPx(uint32(HyperEVMConfig.XAUT0_SPOT_INDEX), XAUT0_TEST_PX);
+    _setReferenceOraclePx(XAUT0_REFERENCE_PERP_INDEX, uint256(XAUT0_TEST_PX) * 1e2);
 
     vm.startPrank(manager);
 
@@ -237,6 +257,13 @@ abstract contract HyperliquidTestSetup is CoreBackboneSetup {
       coreWriter,
       abi.encodeWithSelector(ICoreWriter.sendRawAction.selector, actionData)
     );
+  }
+
+  /// @notice Sets a perp's oracle price, given in the 8-decimal format the spot price aggregator compares
+  ///         against (the oracle precompile returns `6 - szDecimals` decimals).
+  function _setReferenceOraclePx(uint32 perpIndex, uint256 price8) internal {
+    uint8 szDecimals = PrecompileLib.perpAssetInfo(perpIndex).szDecimals;
+    CoreSimulatorLib.setOraclePx(perpIndex, uint64(price8 / 1e2 / 10 ** szDecimals));
   }
 
   /// @notice Gets the total fund value of the test pool

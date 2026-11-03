@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import {ETHCrossAggregatorTestSetup} from "test/integration/common/priceAggregators/ETHCrossAggregatorTestSetup.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract ETHCrossAggregatorTestArbitrum is ETHCrossAggregatorTestSetup {
   /// @dev wstETH is priced through its wstETH/ETH feed crossed with ETH/USD, as configured in
@@ -15,7 +16,7 @@ contract ETHCrossAggregatorTestArbitrum is ETHCrossAggregatorTestSetup {
   {}
 
   function setUp() public override {
-    vm.createSelectFork("arbitrum", 489036888);
+    vm.createSelectFork("arbitrum", ForkBlocks.ARBITRUM);
 
     super.setUp();
   }

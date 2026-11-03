@@ -38,7 +38,7 @@ import "./ERC20Guard.sol";
 import "../../interfaces/quick/IStakingRewardsFactory.sol";
 import "../../interfaces/quick/IStakingRewards.sol";
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Quick LP token asset guard
 /// @dev Asset type = 5

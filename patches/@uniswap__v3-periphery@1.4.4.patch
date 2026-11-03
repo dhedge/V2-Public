@@ -1,0 +1,153 @@
+diff --git a/contracts/base/ERC721Permit.sol b/contracts/base/ERC721Permit.sol
+index efe0f544554d632e48213e80b51f90c3d11472b4..a7e000f7d55c875666f3ab1205fac51393fc78eb 100644
+--- a/contracts/base/ERC721Permit.sol
++++ b/contracts/base/ERC721Permit.sol
+@@ -1,8 +1,8 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity =0.7.6;
+ 
+-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+-import '@openzeppelin/contracts/utils/Address.sol';
++import '@openzeppelin/v3/contracts/token/ERC721/ERC721.sol';
++import '@openzeppelin/v3/contracts/utils/Address.sol';
+ 
+ import '../libraries/ChainId.sol';
+ import '../interfaces/external/IERC1271.sol';
+diff --git a/contracts/base/PeripheryPayments.sol b/contracts/base/PeripheryPayments.sol
+index 8651e3e2325bb9e18dac62e37b8a64ddfd52adc6..54b46a8929d7b01bcd2d7aafa4563df3e0281f1f 100644
+--- a/contracts/base/PeripheryPayments.sol
++++ b/contracts/base/PeripheryPayments.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.7.5;
+ 
+-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
++import '@openzeppelin/v3/contracts/token/ERC20/IERC20.sol';
+ 
+ import '../interfaces/IPeripheryPayments.sol';
+ import '../interfaces/external/IWETH9.sol';
+diff --git a/contracts/base/PeripheryPaymentsWithFee.sol b/contracts/base/PeripheryPaymentsWithFee.sol
+index b7b1a31ef5c49ef7be77fc27315063219e6d2a0b..412a6155ae02b5ada002a6a7f1a2830f41e02482 100644
+--- a/contracts/base/PeripheryPaymentsWithFee.sol
++++ b/contracts/base/PeripheryPaymentsWithFee.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.7.5;
+ 
+-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
++import '@openzeppelin/v3/contracts/token/ERC20/IERC20.sol';
+ import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
+ 
+ import './PeripheryPayments.sol';
+diff --git a/contracts/base/SelfPermit.sol b/contracts/base/SelfPermit.sol
+index 691acb4d5e855af0632fd02f76c1468af96425a2..214e335b6a7af83847f477e8176610be792442cb 100644
+--- a/contracts/base/SelfPermit.sol
++++ b/contracts/base/SelfPermit.sol
+@@ -1,8 +1,8 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.5.0;
+ 
+-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+-import '@openzeppelin/contracts/drafts/IERC20Permit.sol';
++import '@openzeppelin/v3/contracts/token/ERC20/IERC20.sol';
++import '@openzeppelin/v3/contracts/drafts/IERC20Permit.sol';
+ 
+ import '../interfaces/ISelfPermit.sol';
+ import '../interfaces/external/IERC20PermitAllowed.sol';
+diff --git a/contracts/interfaces/IERC20Metadata.sol b/contracts/interfaces/IERC20Metadata.sol
+index d7bd3e9b36372b47eedc52f18dda285e1a96ee3f..d4357a89c1c2ccb92a43566b0251525698e349f6 100644
+--- a/contracts/interfaces/IERC20Metadata.sol
++++ b/contracts/interfaces/IERC20Metadata.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity ^0.7.0;
+ 
+-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
++import '@openzeppelin/v3/contracts/token/ERC20/IERC20.sol';
+ 
+ /// @title IERC20Metadata
+ /// @title Interface for ERC20 Metadata
+diff --git a/contracts/interfaces/IERC721Permit.sol b/contracts/interfaces/IERC721Permit.sol
+index 744cd3a11145cade695a30bbd1d94ab558cd7190..ca5eb6ec912294646bf05198171912f5d43e6198 100644
+--- a/contracts/interfaces/IERC721Permit.sol
++++ b/contracts/interfaces/IERC721Permit.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.7.5;
+ 
+-import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
++import '@openzeppelin/v3/contracts/token/ERC721/IERC721.sol';
+ 
+ /// @title ERC721 with permit
+ /// @notice Extension to ERC721 that includes a permit function for signature based approvals
+diff --git a/contracts/interfaces/INonfungiblePositionManager.sol b/contracts/interfaces/INonfungiblePositionManager.sol
+index 023b266136d9546787b45be41cfaf6d306175180..a7f0d678d381de03dc1cf6aa1c8671ad2736e7a9 100644
+--- a/contracts/interfaces/INonfungiblePositionManager.sol
++++ b/contracts/interfaces/INonfungiblePositionManager.sol
+@@ -2,8 +2,8 @@
+ pragma solidity >=0.7.5;
+ pragma abicoder v2;
+ 
+-import '@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol';
+-import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
++import '@openzeppelin/v3/contracts/token/ERC721/IERC721Metadata.sol';
++import '@openzeppelin/v3/contracts/token/ERC721/IERC721Enumerable.sol';
+ 
+ import './IPoolInitializer.sol';
+ import './IERC721Permit.sol';
+diff --git a/contracts/interfaces/external/IWETH9.sol b/contracts/interfaces/external/IWETH9.sol
+index 58ab43eb3b0d57ac904b1e4a9b56228e27aa3fe9..04de7c0b1ca1d06f899295cfa576f41e6ed335c1 100644
+--- a/contracts/interfaces/external/IWETH9.sol
++++ b/contracts/interfaces/external/IWETH9.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity =0.7.6;
+ 
+-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
++import '@openzeppelin/v3/contracts/token/ERC20/IERC20.sol';
+ 
+ /// @title Interface for WETH9
+ interface IWETH9 is IERC20 {
+diff --git a/contracts/libraries/NFTDescriptor.sol b/contracts/libraries/NFTDescriptor.sol
+index 8414872ccbe44beb16b4b95444e845c8f85605f3..021c06b26be8be151c69ad68fe9232a70e72a139 100644
+--- a/contracts/libraries/NFTDescriptor.sol
++++ b/contracts/libraries/NFTDescriptor.sol
+@@ -6,9 +6,9 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+ import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+ import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
+ import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
+-import '@openzeppelin/contracts/utils/Strings.sol';
+-import '@openzeppelin/contracts/math/SafeMath.sol';
+-import '@openzeppelin/contracts/math/SignedSafeMath.sol';
++import '@openzeppelin/v3/contracts/utils/Strings.sol';
++import '@openzeppelin/v3/contracts/math/SafeMath.sol';
++import '@openzeppelin/v3/contracts/math/SignedSafeMath.sol';
+ import 'base64-sol/base64.sol';
+ import './HexStrings.sol';
+ import './NFTSVG.sol';
+diff --git a/contracts/libraries/NFTSVG.sol b/contracts/libraries/NFTSVG.sol
+index 2d5ce837714211bcdf502207748ae58e429f8b50..51d7023ee3ddbac74ea320e614586852d6f192f0 100644
+--- a/contracts/libraries/NFTSVG.sol
++++ b/contracts/libraries/NFTSVG.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.7.6;
+ 
+-import '@openzeppelin/contracts/utils/Strings.sol';
++import '@openzeppelin/v3/contracts/utils/Strings.sol';
+ import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
+ import 'base64-sol/base64.sol';
+ 
+diff --git a/contracts/libraries/TransferHelper.sol b/contracts/libraries/TransferHelper.sol
+index 7fc27979b2b684d10bf3aa97010575aa34dfdf5c..b4003376afd006a357ae49b26909a28c792d87ff 100644
+--- a/contracts/libraries/TransferHelper.sol
++++ b/contracts/libraries/TransferHelper.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.6.0;
+ 
+-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
++import '@openzeppelin/v3/contracts/token/ERC20/IERC20.sol';
+ 
+ library TransferHelper {
+     /// @notice Transfers tokens from the targeted address to the given destination

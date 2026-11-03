@@ -19,7 +19,7 @@ pragma experimental ABIEncoderV2;
 
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {UniswapV3PriceLibrary} from "../../../utils/uniswap/UniswapV3PriceLibrary.sol";
 import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
@@ -52,6 +52,8 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
     bytes4 method = getMethod(data);
     address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
+    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "cl asset not enabled");
+
     if (method == INonfungiblePositionManager.mint.selector) {
       INonfungiblePositionManager.MintParams memory param = abi.decode(
         getParams(data),
@@ -60,7 +62,6 @@ contract UniswapV3NonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
 
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(param.token0), "unsupported asset: tokenA");
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(param.token1), "unsupported asset: tokenB");
-      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "uniswap asset not enabled");
 
       require(pool == param.recipient, "recipient is not pool");
 

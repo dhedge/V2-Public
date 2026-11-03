@@ -3,7 +3,7 @@ import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { PrivateTokenSwap } from "../../types";
-import { tryVerify } from "../deploymentHelpers";
+import { tryVerify } from "../helpers/verify";
 
 // Deployment params
 const users: string[] = [

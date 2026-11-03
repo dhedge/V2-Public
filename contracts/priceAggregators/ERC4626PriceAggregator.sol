@@ -17,7 +17,7 @@
 
 pragma solidity 0.8.28;
 
-import {IERC4626} from "@openzeppelin/v5/contracts/interfaces/IERC4626.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";

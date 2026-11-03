@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/token/ERC721/IERC721EnumerableUpgradeable.sol";
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Ramses V2 positions in a non-fungible token interface which allows for them to be transferred

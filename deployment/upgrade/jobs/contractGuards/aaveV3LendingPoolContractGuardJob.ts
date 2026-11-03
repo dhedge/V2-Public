@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 import { IAddresses, IJob, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 
 export const aaveV3LendingPoolContractGuardJob: IJob<void> = async (

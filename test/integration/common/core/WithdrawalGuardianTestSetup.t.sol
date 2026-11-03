@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 

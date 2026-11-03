@@ -1,5 +1,4 @@
 import { IAddresses, IFileNames } from "../types";
-import { AssetType } from "../upgrade/jobs/assetsJob";
 
 // Created before new chain deployment
 const protocolDao = "0x4A83129Ce9C8865EF3f91Fc87130dA25b64F9100";
@@ -65,16 +64,7 @@ export const baseProdData: IAddresses = {
   velodromeCL: {
     nonfungiblePositionManager: "0x827922686190790b37229fd06084350E74485b72",
     voter: aerodromeVoter,
-    enabledGauges: [
-      "0xBd85D45f1636fCEB2359d9Dcf839f12b3cF5AF3F", // CL1-USDC/USDT
-      "0x2A1f7bf46bd975b5004b61c6040597E1B6117040", // CL1-WETH/wstETH
-      "0x1f6c9d116CE22b51b0BC666f86B038a6c19900B8", // CL50-EURC/USDC
-      "0x41b2126661C673C2beDd208cC72E85DC51a5320a", // CL100-WETH/cbBTC
-      "0x6399ed6725cC163D019aA64FF55b22149D7179A8", // CL100-USDC/cbBTC
-      "0xB57eC27f68Bd356e300D57079B6cdbe57d50830d", // CL1-tBTC/cbBTC
-      "0xe2a2B1D8AA4bD8A05e517Ccf61E96A727831B63e", // CL1-USDS/USDC
-      "0xF33a96b5932D9E9B9A0eDA447AbD8C9d48d2e0c8", // CL100-WETH/USDC
-    ],
+    enabledGauges: [],
   },
 
   aaveV3: {
@@ -125,17 +115,6 @@ export const baseProdData: IAddresses = {
     decayTime: 86400, // 24 hours
     maxCumulativeSlippage: 10e4, // 10%
   },
-
-  rewardAssetSetting: [
-    {
-      rewardToken: "0x940181a94a35a4569e4529a3cdfb74e38fd98631",
-      linkedAssetTypes: [
-        AssetType["Velodrome V2 LP/Gauge Asset"], // 25
-        AssetType["Velodrome CL NFT Position Asset"], // 26
-      ],
-      linkedAssets: [],
-    },
-  ],
 
   easySwapperV2: {
     customCooldownDepositsWhitelist: [

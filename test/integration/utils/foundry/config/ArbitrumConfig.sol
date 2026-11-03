@@ -26,6 +26,8 @@ library ArbitrumConfig {
 
   // Oracles
   address public constant WBTC_CHAINLINK_ORACLE = 0xd0C7101eACbB49F3deCcCc166d238410D6D46d57;
+  // ChainlinkPythPriceAggregator: returns the fresher of the Chainlink and Pyth WBTC prices
+  address public constant WBTC_CHAINLINK_PYTH_AGGREGATOR = 0x092e0dA71bbbF4f32749719ac3f42B294ebeCc3d;
   address public constant BTC_CHAINLINK_ORACLE = 0x6ce185860a4963106506C203335A2910413708e9;
   address public constant DOGECOIN_CHAINLINK_ORACLE = 0x9A7FB1b3950837a8D9b40517626E11D4127C098C;
   address public constant WETH_CHAINLINK_ORACLE = 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612;
@@ -38,6 +40,7 @@ library ArbitrumConfig {
   address public constant SUI_CHAINLINK_ORACLE = 0x4a85B128EBDaFC24d5CB611e161376ffDECeB289;
   address public constant LINK_CHAINLINK_ORACLE = 0x86E53CF1B870786351Da77A57575e79CB55812CB;
   address public constant PUMP_CHAINLINK_ORACLE = 0x0C997958ccE7A0403AEA7E34d14bbaDA897B5bb3;
+  address public constant NEAR_CHAINLINK_ORACLE = 0xBF5C3fB2633e924598A46B9D07a174a9DBcF57C0;
   address public constant WSTETH_ORACLE = 0x478D8f26013184D7eEE8184dCB757E741a3C7EC1;
 
   // Toros Vaults
@@ -88,6 +91,9 @@ library ArbitrumConfig {
   address public constant AAVEBEAR1X = 0x4ACa336C6A4eFfBd571Ab4c2621ee0ec4A594c46;
   address public constant AAVEBULL2X = 0xdDaaCbDBf778924e11Eb6D50EB6CE5EB3Cb95DF5;
   address public constant HYPEBULL3X = 0x0219549D65ac79326bD7874f6c610CB5e1B76d33;
+  address public constant NEAR1X = 0x75d1c951e5BCE4CcA5091901A7e7F2a697d99e5E;
+  address public constant NEARBULL2X = 0xF1078306A52Aa9370e846f93ff3dD6591d028051;
+  address public constant NEARBULL3X = 0xb6bd70E974A77E9440ABa6E44865c7bCfA585954;
 
   // Auxiliary Contracts
   address public constant SWAPPER = 0x4F754e0F0924afD74980886b0B479Fa1D7C58D0D;

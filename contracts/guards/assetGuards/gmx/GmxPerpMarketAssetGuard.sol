@@ -5,24 +5,34 @@ pragma experimental ABIEncoderV2;
 import {IGmxExchangeRouterContractGuard} from "../../../interfaces/gmx/IGmxExchangeRouterContractGuard.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
+import {IAccountedTokenAssetGuard} from "../../../interfaces/guards/IAccountedTokenAssetGuard.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {OutsidePositionWithdrawalHelper} from "../OutsidePositionWithdrawalHelper.sol";
 import {ERC20Guard} from "../ERC20Guard.sol";
+import {NonDepositAssetGuard} from "../shared/NonDepositAssetGuard.sol";
 import {GmxStructs} from "../../../utils/gmx/GmxStructs.sol";
 import {GmxPerpMarketAssetGuardLib} from "../../../utils/gmx/GmxPerpMarketAssetGuardLib.sol";
 
 /// @notice AssetType = 105
-contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard, IAddAssetCheckGuard {
+contract GmxPerpMarketAssetGuard is
+  OutsidePositionWithdrawalHelper,
+  ERC20Guard,
+  IAccountedTokenAssetGuard,
+  NonDepositAssetGuard
+{
   address public immutable gmxExchangeRouter;
-  bool public override isAddAssetCheckGuard = true;
+
+  /// @inheritdoc IAccountedTokenAssetGuard
+  // solhint-disable-next-line const-name-snakecase
+  bool public constant override isAccountedTokenAssetGuard = true;
 
   constructor(address _gmxExchangeRouter) {
     gmxExchangeRouter = _gmxExchangeRouter;
   }
 
-  function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) external view override {
-    require(!_asset.isDeposit, "deposit not supported");
+  function _addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) internal view override {
+    super._addAssetCheck(_poolLogic, _asset);
+
     GmxStructs.PoolSetting memory poolSetting = _useContractGuard(IPoolLogic(_poolLogic).factory())
       .dHedgePoolsWhitelist(_poolLogic);
     require(poolSetting.poolLogic == _poolLogic, "not gmx whitelisted");
@@ -44,6 +54,14 @@ contract GmxPerpMarketAssetGuard is OutsidePositionWithdrawalHelper, ERC20Guard,
   /// @return decimals Decimals of the asset
   function getDecimals(address) external pure override returns (uint256 decimals) {
     decimals = 18;
+  }
+
+  /// @inheritdoc IAccountedTokenAssetGuard
+  /// @dev The asset's $1 oracle prices the composite USD value returned by `getBalance`, not raw GMX market
+  ///      token units. Generic swap guards therefore cannot value a market token source correctly; market
+  ///      tokens must be unwound through the guarded GMX withdrawal flow.
+  function isAccountedToken(address, address _asset, address _token) external pure override returns (bool accounted) {
+    accounted = _asset == _token;
   }
 
   /// @notice Creates transaction data for withdrawing from GMX leverage positions

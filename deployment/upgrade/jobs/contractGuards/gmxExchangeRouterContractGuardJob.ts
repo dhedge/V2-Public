@@ -1,13 +1,28 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, proposeTransactions, tryVerify } from "../../../deploymentHelpers";
-import type { MetaTransactionData } from "../../../deploymentHelpers";
+import { proposeTx, proposeTransactions } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
+import type { MetaTransactionData } from "../../../helpers/safe";
 
 import { IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses } from "../../../types";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 import { closedContractGuardJob } from "./closedContractGuardJob";
 
 // dHEDGE asset type registered for the Gmx Perps Market asset guard.
 const GMX_MARKET_ASSET_TYPE = 105;
+
+// Propose assets at an earlier Safe nonce; the registry is updated only when that proposal executes.
+// PoolManagerLogic.changeAssets validates asset registration when this batch executes.
+// Remove entries after their guard activation batch executes.
+const MARKET_ACTIVATIONS: { market: string; vaults: string[] }[] = [
+  {
+    market: "0x63Dc80EE90F26363B3FCD609007CC9e14c8991BE", // NEAR
+    vaults: [
+      "0x75d1c951e5BCE4CcA5091901A7e7F2a697d99e5E", // NEAR1X
+      "0xF1078306A52Aa9370e846f93ff3dD6591d028051", // NEARBULL2X
+      "0xb6bd70E974A77E9440ABa6E44865c7bCfA585954", // NEARBULL3X
+    ],
+  },
+];
 
 export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -45,6 +60,11 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
   }
 
   console.log("Will deploy GmxExchangeRouterContractGuard");
+  for (const activation of MARKET_ACTIVATIONS) {
+    console.log(
+      `Will enable GMX market ${activation.market} and register callbacks in ${activation.vaults.length} vault(s)`,
+    );
+  }
 
   if (config.execute) {
     console.log("Deploying GMX libraries...");
@@ -157,14 +177,25 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
     // Register the new guard as the saved callback contract for every whitelisted vault on every
     // supported GMX market, so keeper-created orders (liquidations, ADLs) can reach this guard.
     // Proposed atomically with the guard installation: any failed registration reverts the batch.
-    const safeTransactionData: MetaTransactionData[] = [];
-
-    const registrationPairs = await discoverSavedCallbackRegistrationPairs(
+    const discoveredPairs = await discoverSavedCallbackRegistrationPairs(
       hre,
       dHedgeVaultsWhitelist,
       dataStore,
       reader,
       addresses,
+    );
+
+    const { safeTransactionData, registrationPairs } = await buildGuardAndMarketActivationCalls(
+      hre,
+      {
+        governanceAddress: versions[config.oldTag].contracts.Governance,
+        exchangeRouter,
+        guardAddress: gmxExchangeRouterContractGuardAddress,
+        dHedgeVaultsWhitelist,
+        dataStore,
+        reader,
+      },
+      discoveredPairs,
     );
 
     const perPoolRegistrationCalls = await buildPerPoolRegistrationCalls(
@@ -173,19 +204,9 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
       exchangeRouter,
       gmxExchangeRouterContractGuardAddress,
     );
-
     console.log(
       `Saved callback migration: ${perPoolRegistrationCalls.length} pool(s), ${registrationPairs.size} (pool, market) pair(s)`,
     );
-
-    safeTransactionData.push({
-      to: versions[config.oldTag].contracts.Governance,
-      value: "0",
-      data: governanceABI.encodeFunctionData("setContractGuard", [
-        exchangeRouter,
-        gmxExchangeRouterContractGuardAddress,
-      ]),
-    });
 
     for (const poolRegistration of perPoolRegistrationCalls) {
       safeTransactionData.push(poolRegistration);
@@ -193,7 +214,7 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
 
     await proposeTransactions(
       safeTransactionData,
-      "setContractGuard for GmxExchangeRouterContractGuard + saved callback registration",
+      "setContractGuard for GmxExchangeRouterContractGuard + market activation + saved callback registration",
       config,
       addresses,
     );
@@ -240,6 +261,65 @@ export const gmxExchangeRouterContractGuardJob: IJob<void> = async (
       );
     }
   }
+};
+
+type GuardAndMarketActivationParams = {
+  governanceAddress: string;
+  exchangeRouter: string;
+  guardAddress: string;
+  dHedgeVaultsWhitelist: { poolLogic: string }[];
+  dataStore: string;
+  reader: string;
+};
+
+/** Builds the guard installation and any new market activations in Safe execution order. */
+const buildGuardAndMarketActivationCalls = async (
+  hre: HardhatRuntimeEnvironment,
+  params: GuardAndMarketActivationParams,
+  discoveredPairs: Set<string>,
+): Promise<{ safeTransactionData: MetaTransactionData[]; registrationPairs: Set<string> }> => {
+  const ethers = hre.ethers;
+  const governance = await ethers.getContractAt("Governance", params.governanceAddress);
+  const safeTransactionData: MetaTransactionData[] = [
+    {
+      to: params.governanceAddress,
+      value: "0",
+      data: governance.interface.encodeFunctionData("setContractGuard", [params.exchangeRouter, params.guardAddress]),
+    },
+  ];
+  const registrationPairs = new Set(discoveredPairs);
+  const whitelistedPools = new Set(params.dHedgeVaultsWhitelist.map(({ poolLogic }) => poolLogic.toLowerCase()));
+  const readerArtifact = await hre.artifacts.readArtifact("IGmxReader");
+  const readerContract = new ethers.Contract(params.reader, readerArtifact.abi, ethers.provider);
+
+  for (const activation of MARKET_ACTIVATIONS) {
+    const market = activation.market.toLowerCase();
+    const { marketToken } = await readerContract.getMarket(params.dataStore, market);
+    if (marketToken.toLowerCase() !== market) {
+      throw new Error(`Activation market ${market} is not a GMX market`);
+    }
+
+    for (const vault of activation.vaults) {
+      const poolLogic = vault.toLowerCase();
+      if (!whitelistedPools.has(poolLogic)) throw new Error(`Activation pool ${vault} is not GMX whitelisted`);
+
+      const pair = `${poolLogic}:${market}`;
+      if (registrationPairs.has(pair)) continue;
+
+      const pool = await ethers.getContractAt("PoolLogic", poolLogic);
+      const managerAddress = await pool.poolManagerLogic();
+      const manager = await ethers.getContractAt("PoolManagerLogic", managerAddress);
+      safeTransactionData.push({
+        to: managerAddress,
+        value: "0",
+        data: manager.interface.encodeFunctionData("changeAssets", [[{ asset: market, isDeposit: false }], []]),
+      });
+      registrationPairs.add(pair);
+      console.log(`Pool ${poolLogic}: enabling GMX market ${market}`);
+    }
+  }
+
+  return { safeTransactionData, registrationPairs };
 };
 
 /**

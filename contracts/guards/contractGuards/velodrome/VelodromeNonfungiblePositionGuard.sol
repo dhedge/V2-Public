@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import {IVelodromeNonfungiblePositionManager} from "../../../interfaces/velodrome/IVelodromeNonfungiblePositionManager.sol";
 import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {VelodromeCLPriceLibrary} from "../../../utils/velodrome/VelodromeCLPriceLibrary.sol";
 import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
@@ -43,6 +43,8 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
     bytes memory params = getParams(data);
     address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
 
+    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "cl asset not enabled");
+
     if (method == IVelodromeNonfungiblePositionManager.mint.selector) {
       IVelodromeNonfungiblePositionManager.MintParams memory mintParams = abi.decode(
         params,
@@ -51,7 +53,6 @@ contract VelodromeNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTracki
 
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
-      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "velodrome cl asset not enabled");
       require(mintParams.sqrtPriceX96 == 0, "sqrtPriceX96 must be 0");
       require(pool == mintParams.recipient, "recipient is not pool");
 

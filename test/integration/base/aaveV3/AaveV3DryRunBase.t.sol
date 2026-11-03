@@ -3,9 +3,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
-import {AaveV3TestBase, AaveV3TestBaseSharedData} from "test/integration/base/aaveV3/AaveV3TestBase.t.sol";
+import {AaveV3TestBase} from "test/integration/base/aaveV3/AaveV3TestBase.t.sol";
 import {DeploymentDryRunBase} from "test/integration/utils/foundry/dryRun/DeploymentDryRunBase.t.sol";
 import {BaseConfig} from "test/integration/utils/foundry/config/BaseConfig.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
@@ -15,10 +15,10 @@ import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {Governance} from "contracts/Governance.sol";
 import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol";
 import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
-import {RewardAssetGuard} from "contracts/guards/assetGuards/RewardAssetGuard.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3DryRunBase is DeploymentDryRunBase {
-  constructor() DeploymentDryRunBase(AaveV3TestBaseSharedData.FORK_BLOCK_NUMBER, getTorosVaults()) {}
+  constructor() DeploymentDryRunBase(ForkBlocks.BASE, getTorosVaults()) {}
 
   function setUp() public override {
     super.setUp();
@@ -34,16 +34,6 @@ contract AaveV3DryRunBase is DeploymentDryRunBase {
     FlatMoneyCollateralAssetGuard flatMoneyCollateralGuard = new FlatMoneyCollateralAssetGuard(
       BaseConfig.FLAT_MONEY_V1_DELAYED_ORDER
     );
-    RewardAssetGuard.RewardAssetSetting[] memory rewardAssetSettings = new RewardAssetGuard.RewardAssetSetting[](1);
-    uint16[] memory linkedAssetTypes = new uint16[](2);
-    linkedAssetTypes[0] = uint16(AssetTypes.AssetTypeIncomplete.VELODROME_V2_LP);
-    linkedAssetTypes[1] = uint16(AssetTypes.AssetTypeIncomplete.VELODROME_CL);
-    rewardAssetSettings[0] = RewardAssetGuard.RewardAssetSetting({
-      rewardToken: BaseConfig.AERO,
-      linkedAssetTypes: linkedAssetTypes,
-      linkedAssets: new address[](0)
-    });
-    RewardAssetGuard rewardAssetGuard = new RewardAssetGuard(rewardAssetSettings);
     Governance governance = Governance(poolFactory.governanceAddress());
     address assetHandlerAddr = poolFactory.getAssetHandler();
     vm.startPrank(poolFactory.owner());
@@ -55,7 +45,6 @@ contract AaveV3DryRunBase is DeploymentDryRunBase {
       uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
       address(flatMoneyCollateralGuard)
     );
-    governance.setAssetGuard(200, address(rewardAssetGuard));
   }
 
   function getTorosVaults() internal pure returns (address[] memory torosVaults) {

@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.28;
 
-import {ECDSA} from "@openzeppelin/v5/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/v5/contracts/utils/cryptography/MessageHashUtils.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-import {OwnableUpgradeable} from "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {ICommonErrors} from "../interfaces/ICommonErrors.sol";
 import {IGMTokenManager} from "../interfaces/ondo/IGMTokenManager.sol";

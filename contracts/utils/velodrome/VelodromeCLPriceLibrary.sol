@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 
 import {IVelodromeCLFactory} from "../../interfaces/velodrome/IVelodromeCLFactory.sol";
 import {IVelodromeCLPool} from "../../interfaces/velodrome/IVelodromeCLPool.sol";
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import {CLPriceLibrary} from "../commonCL/CLPriceLibrary.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices

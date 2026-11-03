@@ -3,10 +3,10 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {Math} from "@openzeppelin/contracts/math/Math.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import {Math} from "@openzeppelin/v3/contracts/math/Math.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SignedSafeMath} from "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 import {ChainlinkTWAPAggregator} from "contracts/priceAggregators/ChainlinkTWAPAggregator.sol";
@@ -16,6 +16,7 @@ import {DhedgeMath} from "contracts/utils/DhedgeMath.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 import {Test} from "forge-std/Test.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract ChainlinkTWAPAggregatorXAUtTest is Test {
   using Math for uint256;
@@ -35,8 +36,7 @@ contract ChainlinkTWAPAggregatorXAUtTest is Test {
   ChainlinkTWAPAggregator public chainlinkTWAPAggregator;
 
   function setUp() public virtual {
-    // Always start from a fresh fork
-    vm.createSelectFork("ethereum");
+    vm.createSelectFork("ethereum", ForkBlocks.ETHEREUM);
 
     uniV3TWAPAggregator = new UniV3TWAPAggregator(
       WBTC_XAUt_POOL,

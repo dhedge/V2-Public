@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import { TAssetConfig, IChainlinkPythPriceAggregatorConfig } from "./oracleTypes";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { Address } from "../../../types";
 import { gmx as arbitrumGmx } from "../../../arbitrum/deploymentData";
 
@@ -12,14 +12,14 @@ const validateChainlinkOracleForGmx = async (
   assetConfig: IChainlinkPythPriceAggregatorConfig,
 ) => {
   const ethers = hre.ethers;
-  function hashData(dataTypes, dataValues) {
+  function hashData(dataTypes: string[], dataValues: unknown[]) {
     const bytes = ethers.utils.defaultAbiCoder.encode(dataTypes, dataValues);
     const hash = ethers.utils.keccak256(ethers.utils.arrayify(bytes));
 
     return hash;
   }
 
-  function hashString(string) {
+  function hashString(string: string) {
     return hashData(["string"], [string]);
   }
   if (hre.network.name === "arbitrum") {
@@ -39,10 +39,10 @@ const validateChainlinkOracleForGmx = async (
       return true;
     }
     const oracleDecimals = await (
-      await ethers.getContractAt("AggregatorV3Interface", chainlinkOracleAddress)
+      await ethers.getContractAt("IAggregatorV3Interface", chainlinkOracleAddress)
     ).decimals();
     const gmxOracleDecimals = await (
-      await ethers.getContractAt("AggregatorV3Interface", chainlinkOracleInGmx)
+      await ethers.getContractAt("IAggregatorV3Interface", chainlinkOracleInGmx)
     ).decimals();
     console.log(`Gmx chainlinkOracle: `, `${chainlinkOracleInGmx} (decimals: ${gmxOracleDecimals})`);
     console.log(`chainlinkOracleAddress: `, `${chainlinkOracleAddress} (decimals: ${oracleDecimals})`);

@@ -3,9 +3,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
-import {AaveV3TestArbitrum, AaveV3TestArbitrumSharedData} from "test/integration/arbitrum/aaveV3/AaveV3TestArbitrum.t.sol";
+import {AaveV3TestArbitrum} from "test/integration/arbitrum/aaveV3/AaveV3TestArbitrum.t.sol";
 import {DeploymentDryRunArbitrum} from "test/integration/utils/foundry/dryRun/DeploymentDryRunArbitrum.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
@@ -16,9 +16,10 @@ import {Governance} from "contracts/Governance.sol";
 import {FlatMoneyCollateralAssetGuard} from "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol";
 import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3DryRunArbitrum is DeploymentDryRunArbitrum {
-  constructor() DeploymentDryRunArbitrum(AaveV3TestArbitrumSharedData.FORK_BLOCK_NUMBER, getTorosVaults()) {}
+  constructor() DeploymentDryRunArbitrum(ForkBlocks.ARBITRUM, getTorosVaults()) {}
 
   function setUp() public override {
     super.setUp();
@@ -48,7 +49,7 @@ contract AaveV3DryRunArbitrum is DeploymentDryRunArbitrum {
     assetHandler.addAsset(
       ArbitrumConfig.WBTC,
       uint16(AssetTypes.AssetTypeIncomplete.FLAT_MONEY_COLLATERAL),
-      0x092e0dA71bbbF4f32749719ac3f42B294ebeCc3d // ChainlinkPythPriceAggregator currently set to WBTC
+      ArbitrumConfig.WBTC_CHAINLINK_PYTH_AGGREGATOR
     );
     assetHandler.addAsset(
       ArbitrumConfig.USDC,

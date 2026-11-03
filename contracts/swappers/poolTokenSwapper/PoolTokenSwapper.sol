@@ -3,13 +3,13 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/MathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "./IFactory.sol";
 import "../../utils/TxDataUtils.sol";

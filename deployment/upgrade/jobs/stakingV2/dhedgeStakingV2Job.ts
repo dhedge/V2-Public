@@ -1,8 +1,10 @@
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DhedgeStakingV2 } from "../../../../types";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { OZ_V3_INITIALIZER_KINDS } from "../../../helpers/upgradeValidation";
 
 export const dhedgeStakingV2Job: IJob<void> = async (
   config: IUpgradeConfig,
@@ -33,7 +35,9 @@ export const dhedgeStakingV2Job: IJob<void> = async (
     if (config.execute) {
       console.log("Creating a new deployment of DhedgeV2Staking");
       const DhedgeStakingV2 = await ethers.getContractFactory("DhedgeStakingV2");
-      const dhedgeStakingV2Proxy = (await upgrades.deployProxy(DhedgeStakingV2, [dht])) as DhedgeStakingV2;
+      const dhedgeStakingV2Proxy = (await upgrades.deployProxy(DhedgeStakingV2, [dht], {
+        unsafeAllow: OZ_V3_INITIALIZER_KINDS,
+      })) as DhedgeStakingV2;
       await dhedgeStakingV2Proxy.deployed();
 
       const dhedgeStakingV2Implementation = await getImplementationAddress(
@@ -92,7 +96,9 @@ export const dhedgeStakingV2Job: IJob<void> = async (
     if (config.execute) {
       console.log("Upgrading DhedgeV2Staking");
       const DhedgeStakingV2 = await ethers.getContractFactory("DhedgeStakingV2");
-      const dhedgeStakingV2 = await upgrades.prepareUpgrade(dhedgeStakingV2Proxy, DhedgeStakingV2);
+      const dhedgeStakingV2 = await upgrades.prepareUpgrade(dhedgeStakingV2Proxy, DhedgeStakingV2, {
+        unsafeAllow: OZ_V3_INITIALIZER_KINDS,
+      });
       console.log("dhedgeStakingV2 deployed to: ", dhedgeStakingV2);
 
       await tryVerify(hre, dhedgeStakingV2, "contracts/stakingv2/DhedgeStakingV2.sol:DhedgeStakingV2", []);

@@ -18,8 +18,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/v3/contracts/token/ERC20/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 
 import {IV3SwapRouter} from "../interfaces/uniswapV3/IV3SwapRouter.sol";

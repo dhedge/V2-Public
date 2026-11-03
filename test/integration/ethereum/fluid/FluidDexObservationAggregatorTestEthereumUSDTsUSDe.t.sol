@@ -5,6 +5,7 @@ import {FluidDexObservationAggregatorTestSetup} from "test/integration/common/fl
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
 import {IFluidDexT1} from "contracts/interfaces/fluid/IFluidDexT1.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @notice Tests FluidDexObservationAggregator with the sUSDe/USDT Fluid DEX pool
 contract FluidDexObservationAggregatorTestEthereumUSDTsUSDe is FluidDexObservationAggregatorTestSetup {
@@ -33,7 +34,7 @@ contract FluidDexObservationAggregatorTestEthereumUSDTsUSDe is FluidDexObservati
   {}
 
   function setUp() public override {
-    vm.createSelectFork("ethereum", 24376734);
+    vm.createSelectFork("ethereum", ForkBlocks.ETHEREUM);
 
     super.setUp();
   }

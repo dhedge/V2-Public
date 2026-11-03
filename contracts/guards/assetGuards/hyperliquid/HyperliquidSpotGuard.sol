@@ -17,13 +17,12 @@
 
 pragma solidity 0.8.28;
 
-import {IERC20} from "@openzeppelin/v5/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IAssetGuard} from "../../../interfaces/guards/IAssetGuard.sol";
 import {IGuard} from "../../../interfaces/guards/IGuard.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
 import {IERC20Extended} from "../../../interfaces/IERC20Extended.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
@@ -34,6 +33,7 @@ import {IHyperliquidCoreWriterContractGuard} from "../../../interfaces/hyperliqu
 import {InFlightTracker} from "../../../utils/hyperliquid/InFlightTracker.sol";
 import {FixedPointMathLib} from "../../../utils/FixedPointMathLib.sol";
 import {OutsidePositionWithdrawalHelper} from "../OutsidePositionWithdrawalHelper.sol";
+import {AddAssetCheckGuard} from "../shared/AddAssetCheckGuard.sol";
 
 /// @title Hyperliquid ERC20 asset guard
 /// @notice Asset guard for spot assets and combination of asset and contract guard for linked EVM tokens on HyperEVM.
@@ -50,7 +50,7 @@ contract HyperliquidSpotGuard is
   ITxTrackingGuard,
   IAssetGuard,
   ITransactionTypes,
-  IAddAssetCheckGuard,
+  AddAssetCheckGuard,
   InFlightTracker,
   OutsidePositionWithdrawalHelper
 {
@@ -64,10 +64,6 @@ contract HyperliquidSpotGuard is
   ///         call `afterTxGuard` after the transaction is executed.
   // solhint-disable-next-line const-name-snakecase
   bool public constant override isTxTrackingGuard = true;
-
-  /// @notice Indicates the pool using this guard should call `addAssetCheck` before adding an asset.
-  // solhint-disable-next-line const-name-snakecase
-  bool public constant override isAddAssetCheckGuard = true;
 
   /////////////////////////////////////////////
   //                Functions                //
@@ -218,7 +214,7 @@ contract HyperliquidSpotGuard is
   ///      to the guards' balance accounting.
   /// @dev Manual activation can be done by sending 1 USDC to the pool's account on HyperCore directly.
   /// @param pool PoolLogic address.
-  function addAssetCheck(address pool, IHasSupportedAsset.Asset calldata asset) external view override {
+  function _addAssetCheck(address pool, IHasSupportedAsset.Asset calldata asset) internal view override {
     require(coreUserExists(pool), "core user not activated");
 
     if (isSystemAddress(asset.asset)) {

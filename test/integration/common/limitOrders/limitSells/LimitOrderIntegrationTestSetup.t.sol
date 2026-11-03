@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
@@ -116,7 +116,7 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
     // Add the created Toros pool to asset handler
     IAssetHandler.Asset memory torosPoolAsset = IAssetHandler.Asset({
       asset: address(testTorosPool),
-      assetType: uint16(AssetTypeIncomplete.CHAINLINK),
+      assetType: uint16(AssetTypeIncomplete.NESTED_VAULT),
       aggregator: torosPoolPriceAggregator
     });
 
@@ -129,7 +129,7 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
     IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](3);
     supportedAssets[0] = IHasSupportedAsset.Asset({asset: usdcData.asset, isDeposit: true}); // USDC as deposit asset
     supportedAssets[1] = IHasSupportedAsset.Asset({asset: address(easySwapperV2Proxy), isDeposit: false}); // EasySwapperV2 "asset"
-    supportedAssets[2] = IHasSupportedAsset.Asset({asset: address(testTorosPool), isDeposit: true}); // Created Toros pool for limit orders
+    supportedAssets[2] = IHasSupportedAsset.Asset({asset: address(testTorosPool), isDeposit: false}); // Created Toros pool for limit orders
 
     testPool = PoolLogic(
       poolFactoryProxy.createFund({
@@ -262,7 +262,7 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
     deal(usdcData.asset, address(testPool), 0);
     address[] memory removeAssets = new address[](1);
     removeAssets[0] = usdcData.asset;
-    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), removeAssets);
+    testPoolManagerLogic.changeAssets(_wethAsDepositAsset(), removeAssets);
 
     IPoolLimitOrderManager.LimitOrderInfo memory limitOrderInfo = IPoolLimitOrderManager.LimitOrderInfo({
       amount: 100e18,
@@ -344,7 +344,7 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
     testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), removeAssets);
     // After we made sure removing USDC reverts, we add the mock call so that it becomes possible to remove USDC, to check further reverts work
     vm.mockCall(address(governance), abi.encodeWithSignature("assetGuards(uint16)", 30), abi.encode(address(0)));
-    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), removeAssets);
+    testPoolManagerLogic.changeAssets(_wethAsDepositAsset(), removeAssets);
 
     // Try to modify the limit order
     IPoolLimitOrderManager.LimitOrderInfo memory modifiedInfo = IPoolLimitOrderManager.LimitOrderInfo({
@@ -474,7 +474,7 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
     // After we made sure removing USDC reverts, we add the mock call so that it becomes possible to remove USDC, to check further reverts work
     vm.mockCall(address(governance), abi.encodeWithSignature("assetGuards(uint16)", 30), abi.encode(address(0)));
     vm.prank(manager);
-    testPoolManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), removeAssets);
+    testPoolManagerLogic.changeAssets(_wethAsDepositAsset(), removeAssets);
 
     IWithdrawalVault.MultiInSingleOutData memory swapData;
     swapData.destData.destToken = IERC20(usdcData.asset);
@@ -534,8 +534,20 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
       vaultTokensBalance / 2,
       "Depositor should be able to withdraw tokens after limit order execution"
     );
-    assertEq(testPoolValueAfterWithdrawal, testPoolValueBeforeWithdrawal / 2, "Pool value should decrease accordingly");
-    assertEq(usdcVaultBalanceAfter, usdcVaultBalance / 2, "Vault USDC balance should be zero after withdrawal");
+    // Rounding dust: 2 micro-USDC (~$0.000002). Each USDC leg pays out floor(half), so the pool's
+    // own USDC and the withdrawal vault's USDC can each keep 1 micro-USDC behind.
+    uint256 maxRoundingDust = testPoolManagerLogic.assetValue(usdcData.asset, 2);
+    assertApproxEqAbs(
+      testPoolValueAfterWithdrawal,
+      testPoolValueBeforeWithdrawal / 2,
+      maxRoundingDust,
+      "Pool value should decrease accordingly"
+    );
+    assertEq(
+      usdcVaultBalanceAfter,
+      (usdcVaultBalance + 1) / 2, // ceil(half) stays in the vault; floor(half) was paid out
+      "Vault should retain the floor-rounded USDC remainder"
+    );
     assertGt(
       usdcManagerBalanceAfter,
       usdcManagerBalanceBefore,
@@ -692,5 +704,12 @@ abstract contract LimitOrderIntegrationTestSetup is BackboneSetup {
     for (uint256 i; i < complexAssetsData.length; ++i) {
       complexAssetsData[i].slippageTolerance = DEFAULT_SLIPPAGE_TOLERANCE;
     }
+  }
+
+  /// @dev WETH takes over as the deposit asset a pool must keep once USDC is removed, since the
+  ///      nested pool cannot be one.
+  function _wethAsDepositAsset() internal view returns (IHasSupportedAsset.Asset[] memory addAssets) {
+    addAssets = new IHasSupportedAsset.Asset[](1);
+    addAssets[0] = IHasSupportedAsset.Asset({asset: wethData.asset, isDeposit: true});
   }
 }

@@ -5,8 +5,8 @@ pragma experimental ABIEncoderV2;
 
 import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
 
 import {IVelodromeNonfungiblePositionManager} from "../../../interfaces/velodrome/IVelodromeNonfungiblePositionManager.sol";
 import {IVelodromeCLPool} from "../../../interfaces/velodrome/IVelodromeCLPool.sol";

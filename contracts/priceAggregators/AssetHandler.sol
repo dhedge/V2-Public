@@ -1,7 +1,7 @@
 // For dHEDGE Asset Price Feeds
 // Asset types:
 // 0 = Chainlink direct USD price feed with 8 decimals
-// 1 = Synthetix synth with Chainlink direct USD price feed
+// 1 = Nested Vault Asset
 // 2 = Sushi LP tokens
 // 3 = Aave V2 Lending Pool Asset
 // 4 = Lending Enable Asset
@@ -52,8 +52,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";

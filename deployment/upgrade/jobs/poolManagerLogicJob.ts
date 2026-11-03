@@ -1,6 +1,7 @@
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../types";
 
 // PoolManagerLogic upgrade is broken as far as I can tell.

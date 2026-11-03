@@ -75,6 +75,7 @@ export const ethereumProdData: IAddresses = {
   assets: {
     nativeAssetWrapper: assets.weth,
     usdc: assets.usdc,
+    usdcNative: assets.usdc,
   },
 
   oneInchV6RouterAddress: "0x111111125421cA6dc452d289314280a0f8842A65",
@@ -196,7 +197,7 @@ export const ethereumProdData: IAddresses = {
     ondoGMSwap: {
       // Non-pool OndoGMSwap callers.
       authorizedCallers: [
-        "0x159d5cE26dBDCB1f2e34EC5C689f9411De0C85FE", // DytmWithdrawProcessor
+        "0x639e9361aDB8FEdC20574F86640cEf25B9584110", // DytmWithdrawProcessor
       ],
     },
   },

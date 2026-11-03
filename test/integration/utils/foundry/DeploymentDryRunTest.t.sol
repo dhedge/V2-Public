@@ -3,8 +3,8 @@
 pragma solidity >=0.7.6 <0.9.0;
 pragma abicoder v2;
 
-import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ProxyAdmin} from "@openzeppelin/v3/contracts/proxy/ProxyAdmin.sol";
+import {ERC20} from "@openzeppelin/v3/contracts/token/ERC20/ERC20.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {PoolFactory} from "contracts/PoolFactory.sol";
@@ -101,13 +101,25 @@ abstract contract DeploymentDryRunTest is Test {
       uint256 tokenPriceBefore = PoolLogic(torosVaultsToCheck[i]).tokenPrice();
       _depositIntoVault(torosVaultsToCheck[i]);
       uint256 tokenPriceAfter = PoolLogic(torosVaultsToCheck[i]).tokenPrice();
-      assertEq(
-        tokenPriceAfter,
-        tokenPriceBefore,
-        string(
-          abi.encodePacked("after deposit tokenPrice mismatch for vault: ", _addressToString(torosVaultsToCheck[i]))
-        )
-      );
+
+      // An unfunded vault has no token price yet; its first deposit establishes the initial share price.
+      if (tokenPriceBefore == 0) {
+        assertGt(
+          tokenPriceAfter,
+          0,
+          string(
+            abi.encodePacked("no tokenPrice after initial deposit for vault: ", _addressToString(torosVaultsToCheck[i]))
+          )
+        );
+      } else {
+        assertEq(
+          tokenPriceAfter,
+          tokenPriceBefore,
+          string(
+            abi.encodePacked("after deposit tokenPrice mismatch for vault: ", _addressToString(torosVaultsToCheck[i]))
+          )
+        );
+      }
     }
   }
 

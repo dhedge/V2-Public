@@ -2,21 +2,8 @@
 // solhint-disable-next-line one-contract-per-file
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-
-contract TestUSDT is ERC20 {
-  using SafeMathUpgradeable for uint256;
-
-  constructor(uint256 totalSupply) ERC20("Test USDT", "tUSDT") {
-    _setupDecimals(6);
-    _mint(msg.sender, totalSupply.mul(10 ** uint256(decimals())));
-  }
-
-  function burn(uint256 amount) public {
-    _burn(msg.sender, amount);
-  }
-}
+import "@openzeppelin/v3/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 contract TestUSDC is ERC20 {
   using SafeMathUpgradeable for uint256;

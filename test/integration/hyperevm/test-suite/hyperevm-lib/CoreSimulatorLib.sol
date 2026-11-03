@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // solhint-disable one-contract-per-file
-pragma solidity >=0.7.6 <0.9.0;
+pragma solidity 0.8.28;
 
 import {Vm} from "forge-std/Vm.sol";
-import {ERC20} from "@openzeppelin/v5/contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConfig.sol";
 import {HyperCore} from "./HyperCore.sol";
 import {CoreWriterSim} from "./CoreWriterSim.sol";
@@ -164,6 +164,10 @@ library CoreSimulatorLib {
 
   function setMarkPx(uint32 perp, uint64 priceDiffBps, bool isIncrease) internal {
     hyperCore.setMarkPx(perp, priceDiffBps, isIncrease);
+  }
+
+  function setOraclePx(uint32 perp, uint64 oraclePx) internal {
+    hyperCore.setOraclePx(perp, oraclePx);
   }
 
   function setSpotPx(uint32 spotMarketId, uint64 spotPx) internal {

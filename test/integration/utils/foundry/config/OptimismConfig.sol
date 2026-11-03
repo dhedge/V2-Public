@@ -13,6 +13,7 @@ library OptimismConfig {
   address public constant SLIPPAGE_ACCUMULATOR_PROD = 0xA300c220450132f1F239B95d855909365C932d25;
   address public constant USD_PRICE_AGGREGATOR_PROD = 0xE02cd1Eeb72388634Da7fdE8143367b7fA544BE7;
   address public constant LEGACY_ONCHAIN_SWAP_ROUTER = 0x64a9c356bc131eDF1430C24F47e9dC735Ed237Ef;
+  address public constant EASY_SWAPPER_V2_PROD = 0x2Ed1bd7f66e47113672f3870308b5E867C5bb743;
 
   // Tokens
   address public constant USDC = 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85;
@@ -27,8 +28,6 @@ library OptimismConfig {
   address public constant USDC_CHAINLINK_ORACLE = 0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3;
   address public constant DAI_CHAINLINK_ORACLE = 0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6;
   address public constant WBTC_CHAINLINK_ORACLE = 0x718A5788b89454aAE3A028AE9c111A29Be6c2a6F;
-  address public constant VELO = 0x9560e827aF36c94D2Ac33a39bCE1Fe78631088Db;
-  address public constant VELO_CHAINLINK_ORACLE = 0x0f2Ed59657e391746C1a097BDa98F2aBb94b1120;
 
   // Toros Vaults
   address public constant BTCBULL4X = 0x11b55966527FF030ca9c7B1c548B4bE5e7EaEe6D;

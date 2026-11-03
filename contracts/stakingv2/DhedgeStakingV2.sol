@@ -43,14 +43,14 @@ import "./DhedgeStakingV2Storage.sol";
 import "./DhedgeStakingV2RewardsCalculator.sol";
 import "./DhedgeStakingV2NFTJson.sol";
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/v3/contracts/utils/Strings.sol";
 
 contract DhedgeStakingV2 is
   IDhedgeStakingV2,

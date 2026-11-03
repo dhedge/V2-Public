@@ -11,6 +11,7 @@ import {Governance} from "contracts/Governance.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {IDytmOfficeContractGuard} from "contracts/interfaces/dytm/IDytmOfficeContractGuard.sol";
 import {DytmOfficeAssetGuard} from "contracts/guards/assetGuards/dytm/DytmOfficeAssetGuard.sol";
+import {NestedVaultAssetGuard} from "contracts/guards/assetGuards/NestedVaultAssetGuard.sol";
 import {DytmWithdrawProcessor} from "contracts/swappers/easySwapperV2/DytmWithdrawProcessor.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
@@ -34,12 +35,12 @@ import {OdosAPIHelper} from "../odos/OdosAPIHelper.sol";
 import {OdosV3ContractGuard} from "contracts/guards/contractGuards/odos/OdosV3ContractGuard.sol";
 import {EasySwapperV2} from "contracts/swappers/easySwapperV2/EasySwapperV2.sol";
 import {EasySwapperV2ContractGuard} from "contracts/guards/contractGuards/EasySwapperV2ContractGuard.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 import {WithdrawalVault} from "contracts/swappers/easySwapperV2/WithdrawalVault.sol";
 import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
 import {DytmSplitTokenIdTracker} from "contracts/guards/assetGuards/dytm/DytmSplitTokenIdTracker.sol";
-import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
+import {ProxyAdmin} from "@openzeppelin/v3/contracts/proxy/ProxyAdmin.sol";
 
 abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeployer, OdosAPIHelper {
   // DYTM Configuration
@@ -184,6 +185,12 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
       address(dytmWithdrawProcessor)
     );
     governance.setAssetGuard(uint16(106), address(dytmOfficeAssetGuard)); // Asset type 106 for DYTM
+    if (isCollateralDhedgePoolToken) {
+      governance.setAssetGuard(
+        uint16(AssetTypes.AssetTypeIncomplete.NESTED_VAULT),
+        address(new NestedVaultAssetGuard())
+      );
+    }
 
     // Add dytm office as supported asset
     assetHandler.addAsset(dytmOffice, uint16(106), _usdPriceAggregator);
@@ -192,7 +199,7 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
     if (isCollateralDhedgePoolToken) {
       // Deploy DHedgePoolAggregator via deployCode (0.8.28 contract, can't use `new` from 0.7.6)
       address dhedgePoolAggregator = deployCode("DHedgePoolAggregator.sol", abi.encode(collateralAsset));
-      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), dhedgePoolAggregator);
+      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.NESTED_VAULT), dhedgePoolAggregator);
     } else {
       assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), collateralOracle);
     }
@@ -418,9 +425,17 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
     uint256 collateralAmount = collateralAmountNormalized * (10 ** IERC20Extended(collateralAsset).decimals());
 
     // Investor deposits collateral into the dytm test pool
-    deal(collateralAsset, investor, collateralAmount);
-    IERC20Extended(collateralAsset).approve(address(dytmTestPool), type(uint256).max);
-    dytmTestPool.deposit(collateralAsset, collateralAmount);
+    if (isCollateralDhedgePoolToken) {
+      // A nested vault cannot be a deposit asset: the pool receives the collateral by transfer and
+      // the investor the shares a deposit of that value would have minted.
+      deal(collateralAsset, address(dytmTestPool), collateralAmount);
+      uint256 shares = PoolManagerLogic(dytmTestPool.poolManagerLogic()).assetValue(collateralAsset, collateralAmount);
+      deal(address(dytmTestPool), investor, shares, true);
+    } else {
+      deal(collateralAsset, investor, collateralAmount);
+      IERC20Extended(collateralAsset).approve(address(dytmTestPool), type(uint256).max);
+      dytmTestPool.deposit(collateralAsset, collateralAmount);
+    }
 
     // Investor also deposits into dytm market so that the pool can borrow later
     uint256 amountToSupplyBorrowAsset = borrowAmountNormalized * 10 * (10 ** IERC20Extended(borrowAsset).decimals());
@@ -495,7 +510,7 @@ abstract contract DytmDelegationCallTestSetup is BackboneSetup, IntegrationDeplo
     }
 
     IHasSupportedAsset.Asset[] memory buffer = new IHasSupportedAsset.Asset[](4 + underlyings.length);
-    buffer[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: true});
+    buffer[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: !isCollateralDhedgePoolToken});
     buffer[1] = IHasSupportedAsset.Asset({asset: borrowAsset, isDeposit: false});
     buffer[2] = IHasSupportedAsset.Asset({asset: swapToAsset, isDeposit: false});
     buffer[3] = IHasSupportedAsset.Asset({asset: address(easySwapperV2Instance), isDeposit: false});

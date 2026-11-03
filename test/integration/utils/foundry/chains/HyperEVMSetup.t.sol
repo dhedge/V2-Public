@@ -5,11 +5,12 @@ pragma abicoder v2;
 
 import {HyperEVMConfig} from "test/integration/utils/foundry/config/HyperEVMConfig.sol";
 import {HyperliquidTestSetup} from "test/integration/hyperevm/test-suite/HyperliquidTestSetup.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @title HyperEVM Chain Setup for Foundry tests
 /// @notice Sets up the HyperEVM chain for integration testing
 abstract contract HyperEVMSetup is HyperliquidTestSetup {
-  uint256 public constant forkBlockNumber = 25342036;
+  uint256 public constant forkBlockNumber = ForkBlocks.HYPEREVM;
 
   function setUp() public virtual override {
     vm.createSelectFork("hyperevm", _forkBlockNumber());

@@ -6,13 +6,10 @@ pragma abicoder v2;
 import {AaveV3TestSetup} from "test/integration/common/aaveV3/AaveV3TestSetup.t.sol";
 import {BaseSetup} from "test/integration/utils/foundry/chains/BaseSetup.t.sol";
 import {BaseConfig} from "test/integration/utils/foundry/config/BaseConfig.sol";
-
-library AaveV3TestBaseSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 33880000;
-}
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3TestBase is AaveV3TestSetup, BaseSetup {
-  constructor() AaveV3TestSetup(_createAaveV3TestConfig()) BaseSetup(AaveV3TestBaseSharedData.FORK_BLOCK_NUMBER) {}
+  constructor() AaveV3TestSetup(_createAaveV3TestConfig()) BaseSetup(ForkBlocks.BASE) {}
 
   function setUp() public virtual override(AaveV3TestSetup, BaseSetup) {
     super.setUp();

@@ -104,37 +104,37 @@
   {
     "assetName": "Toros BTCBULL2X",
     "assetAddress": "0x447b12841ed275636a7719d162D2Df379Cc81152",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros BTCBULL3X",
     "assetAddress": "0x778176Be78245808BB4572Dd86B9B796213E5992",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros ETHBULL2X",
     "assetAddress": "0x907BD45742D811Ad535d2445185E73bc367751d1",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros ETHBULL3X",
     "assetAddress": "0xcE09FAD0dd5e70041402dF947aB3ECF8E430Becb",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros GOLDBULL2X",
     "assetAddress": "0x6FCB08c5f8A69cc8C663BB4a2FaAAD017631577F",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {
     "assetName": "Toros GOLDBULL3X",
     "assetAddress": "0x74A60dAE44DedA8e6C6445Cbbb067097e08b682c",
-    "assetType": "0",
+    "assetType": "1",
     "oracleType": "DHedgePoolAggregator"
   },
   {

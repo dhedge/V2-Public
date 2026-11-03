@@ -2,20 +2,10 @@
   "$schema": "./registry.schema.json",
   "schemaVersion": 1,
   "stringErrors": {
-    "_factory address cannot be 0": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
-      "source": [
-        "contracts/priceAggregators/VelodromeStableLPAggregator.sol"
-      ],
-      "curated": false
-    },
     "_pair address cannot be 0": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
-        "contracts/priceAggregators/VelodromeStableLPAggregator.sol",
-        "contracts/priceAggregators/VelodromeTWAPAggregator.sol",
         "contracts/priceAggregators/VelodromeV2TWAPAggregator.sol"
       ],
       "curated": false
@@ -67,14 +57,6 @@
         "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol"
       ],
       "curated": true
-    },
-    "account value !0": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
-      "source": [
-        "contracts/guards/assetGuards/hyperliquid/HyperliquidPositionGuard.sol"
-      ],
-      "curated": false
     },
     "accounted token source": {
       "description": "This token's value is already counted by another position.",
@@ -317,6 +299,15 @@
       ],
       "curated": false
     },
+    "cannot remove HL core asset": {
+      "description": "The Hyperliquid position asset and USDC cannot be removed from the vault",
+      "action": "Keep the asset enabled; it is required to value and pay out the vault's Hyperliquid holdings.",
+      "source": [
+        "contracts/guards/assetGuards/hyperliquid/HyperliquidERC20Guard.sol",
+        "contracts/guards/assetGuards/hyperliquid/HyperliquidPositionGuard.sol"
+      ],
+      "curated": true
+    },
     "cannot remove non-empty asset": {
       "description": "Cannot remove an asset with a balance",
       "action": "Sell or withdraw the full asset balance first.",
@@ -376,6 +367,17 @@
         "contracts/priceAggregators/AssetHandler.sol"
       ],
       "curated": false
+    },
+    "cl asset not enabled": {
+      "description": "Liquidity position asset not enabled in the vault",
+      "action": "Add the corresponding liquidity position asset to the vault's assets.",
+      "source": [
+        "contracts/guards/contractGuards/pancake/PancakeMasterChefV3Guard.sol",
+        "contracts/guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol",
+        "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol",
+        "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol"
+      ],
+      "curated": true
     },
     "Claiming to much.": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -462,16 +464,8 @@
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
-        "contracts/guards/assetGuards/ArrakisLiquidityGaugeV4AssetGuard.sol",
-        "contracts/guards/assetGuards/BalancerV2GaugeAssetGuard.sol",
-        "contracts/guards/assetGuards/dytm/DytmOfficeAssetGuard.sol",
-        "contracts/guards/assetGuards/flatMoney/v2/FlatMoneyV2UNITOutsideWithdrawalAssetGuard.sol",
-        "contracts/guards/assetGuards/gmx/GmxPerpMarketAssetGuard.sol",
-        "contracts/guards/assetGuards/hyperliquid/HyperliquidPositionGuard.sol",
         "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol",
-        "contracts/guards/assetGuards/midas/MidasMTokenAssetGuard.sol",
-        "contracts/guards/assetGuards/midas/MidasPendingRedemptionAssetGuard.sol",
-        "contracts/guards/assetGuards/ondo/OndoGMTokenAssetGuard.sol"
+        "contracts/guards/assetGuards/shared/NonDepositAssetGuard.sol"
       ],
       "curated": false
     },
@@ -865,8 +859,7 @@
       "description": "Reward token not enabled in the vault",
       "action": "Add the reward token to the vault's assets.",
       "source": [
-        "contracts/guards/contractGuards/AngleDistributorContractGuard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeV2GaugeContractGuard.sol"
+        "contracts/guards/contractGuards/AngleDistributorContractGuard.sol"
       ],
       "curated": true
     },
@@ -1188,12 +1181,14 @@
       "description": "Address cannot be zero",
       "action": "Open a team support message.",
       "source": [
+        "contracts/Governance.sol",
         "contracts/guards/assetGuards/AaveLendingPoolAssetGuard.sol",
         "contracts/guards/assetGuards/EasySwapperV2UnrolledAssetsGuard.sol",
         "contracts/guards/assetGuards/flatMoney/FlatMoneyCollateralAssetGuard.sol",
         "contracts/guards/assetGuards/midas/MidasMTokenAssetGuard.sol",
         "contracts/guards/contractGuards/AngleDistributorContractGuard.sol",
         "contracts/guards/contractGuards/OneInchV6Guard.sol",
+        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
         "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol",
         "contracts/priceAggregators/ChainlinkAggregatorWrapper.sol",
         "contracts/priceAggregators/ChainlinkTWAPAggregator.sol",
@@ -1284,14 +1279,6 @@
       ],
       "curated": false
     },
-    "invalid claimer": {
-      "description": "Rewards claimer must be the vault address",
-      "action": "Set the claimer to the vault address.",
-      "source": [
-        "contracts/guards/contractGuards/velodrome/VelodromeV2GaugeContractGuard.sol"
-      ],
-      "curated": true
-    },
     "invalid collateral": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
@@ -1377,7 +1364,6 @@
       "description": "Delegation to this address is not allowed",
       "action": "Use the approved delegatee address only.",
       "source": [
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveDebtTokenContractGuard.sol",
         "contracts/guards/contractGuards/dytm/DytmOfficeContractGuard.sol"
       ],
       "curated": true
@@ -1386,7 +1372,6 @@
       "description": "Destination must be the system address",
       "action": "Send only to the Hyperliquid system address.",
       "source": [
-        "contracts/guards/assetGuards/OpenAssetGuard.sol",
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
       ],
       "curated": true
@@ -1463,14 +1448,6 @@
       ],
       "curated": false
     },
-    "Invalid extContract address": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
-      "source": [
-        "contracts/Governance.sol"
-      ],
-      "curated": false
-    },
     "Invalid factory": {
       "description": "Factory address cannot be zero",
       "action": "Open a team support message.",
@@ -1510,14 +1487,6 @@
         "contracts/PoolFactory.sol"
       ],
       "curated": true
-    },
-    "Invalid guardAddress": {
-      "description": "No curated description yet - raw error identifier shown.",
-      "action": "If you believe this is a bug, open a team support message.",
-      "source": [
-        "contracts/Governance.sol"
-      ],
-      "curated": false
     },
     "invalid hour": {
       "description": "No curated description yet - raw error identifier shown.",
@@ -1638,19 +1607,19 @@
       ],
       "curated": true
     },
+    "invalid max deviation": {
+      "description": "The maximum spot price deviation must be above zero and below 100%.",
+      "action": "Deploy the aggregator with a deviation between 1 and 9999 basis points.",
+      "source": [
+        "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol"
+      ],
+      "curated": true
+    },
     "invalid method": {
       "description": "Method is not supported by this integration",
       "action": "Use a supported trading method.",
       "source": [
         "contracts/guards/contractGuards/LyraOptionMarketWrapperContractGuardRollups.sol"
-      ],
-      "curated": true
-    },
-    "invalid migrationHelper": {
-      "description": "Migration helper cannot be zero",
-      "action": "Open a team support message.",
-      "source": [
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveDebtTokenContractGuard.sol"
       ],
       "curated": true
     },
@@ -2041,7 +2010,6 @@
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
-        "contracts/priceAggregators/VelodromeTWAPAggregator.sol",
         "contracts/priceAggregators/VelodromeV2TWAPAggregator.sol"
       ],
       "curated": false
@@ -2639,14 +2607,6 @@
       ],
       "curated": false
     },
-    "not perps whitelisted": {
-      "description": "Vault not whitelisted for perps trading",
-      "action": "Ask the protocol team to whitelist the vault.",
-      "source": [
-        "contracts/guards/contractGuards/flatMoney/FlatMoneyDelayedOrderContractGuard.sol"
-      ],
-      "curated": true
-    },
     "not pool logic": {
       "description": "Caller must be the vault contract",
       "action": "If you believe this is a bug, open a team support message.",
@@ -2676,8 +2636,6 @@
         "contracts/guards/assetGuards/flatMoney/v2/FlatMoneyV2UNITAssetGuard.sol",
         "contracts/guards/contractGuards/flatMoney/v2/FlatMoneyOptionsOrderAnnouncementGuard.sol",
         "contracts/guards/contractGuards/flatMoney/v2/FlatMoneyOptionsOrderExecutionGuard.sol",
-        "contracts/guards/contractGuards/flatMoney/v2/FlatMoneyV2OrderAnnouncementGuard.sol",
-        "contracts/guards/contractGuards/flatMoney/v2/FlatMoneyV2OrderExecutionGuard.sol",
         "contracts/swappers/easySwapperV2/EasySwapperV2.sol"
       ],
       "curated": true
@@ -2933,14 +2891,6 @@
       ],
       "curated": false
     },
-    "only whitelisted vaults": {
-      "description": "Vault not whitelisted for migration",
-      "action": "Ask the protocol team to whitelist the vault.",
-      "source": [
-        "contracts/guards/contractGuards/aaveMigrationHelper/AaveDebtTokenContractGuard.sol"
-      ],
-      "curated": true
-    },
     "order in progress": {
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
@@ -2977,22 +2927,6 @@
         "contracts/distribution/RewardDistribution.sol"
       ],
       "curated": false
-    },
-    "pancake cl asset not enabled": {
-      "description": "PancakeSwap CL asset not enabled in vault",
-      "action": "Add the Pancake CL asset to the vault's assets.",
-      "source": [
-        "contracts/guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol"
-      ],
-      "curated": true
-    },
-    "pancake CL asset not enabled": {
-      "description": "PancakeSwap CL asset not enabled in vault",
-      "action": "Add the Pancake CL asset to the vault's assets.",
-      "source": [
-        "contracts/guards/contractGuards/pancake/PancakeMasterChefV3Guard.sol"
-      ],
-      "curated": true
     },
     "pending redemption in progress": {
       "description": "Asset has an unresolved Midas redemption",
@@ -3103,14 +3037,6 @@
         "contracts/guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol"
-      ],
-      "curated": true
-    },
-    "position is not tracked": {
-      "description": "Position is not tracked by the vault",
-      "action": "Use positions created through the vault.",
-      "source": [
-        "contracts/guards/contractGuards/velodrome/VelodromeCLGaugeContractGuard.sol"
       ],
       "curated": true
     },
@@ -3528,8 +3454,6 @@
       "description": "No curated description yet - raw error identifier shown.",
       "action": "If you believe this is a bug, open a team support message.",
       "source": [
-        "contracts/guards/assetGuards/hyperliquid/HyperliquidERC20Guard.sol",
-        "contracts/guards/assetGuards/hyperliquid/HyperliquidPositionGuard.sol",
         "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol"
       ],
       "curated": false
@@ -3547,6 +3471,14 @@
       "action": "Trade this asset on its USDC-quoted Hyperliquid pair.",
       "source": [
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol"
+      ],
+      "curated": true
+    },
+    "spot price deviates from oracle": {
+      "description": "The Hyperliquid spot price of this token is too far from the oracle price of the same asset, so it cannot be priced.",
+      "action": "Wait for the spot price to return near the oracle price and retry.",
+      "source": [
+        "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol"
       ],
       "curated": true
     },
@@ -3833,14 +3765,6 @@
       ],
       "curated": false
     },
-    "uniswap asset not enabled": {
-      "description": "Uniswap V3 asset not enabled in the vault",
-      "action": "Add the Uniswap position asset to the vault.",
-      "source": [
-        "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol"
-      ],
-      "curated": true
-    },
     "uniV2 pool invalid": {
       "description": "Uniswap V2 pool does not match token pair",
       "action": "Rebuild the swap route and try again.",
@@ -3891,14 +3815,6 @@
       ],
       "curated": true
     },
-    "unsupported asset: rewardToken": {
-      "description": "Reward token not enabled in the vault",
-      "action": "Add the reward token to the vault's assets.",
-      "source": [
-        "contracts/guards/contractGuards/velodrome/VelodromeCLGaugeContractGuard.sol"
-      ],
-      "curated": true
-    },
     "unsupported asset: tokenA": {
       "description": "tokenA not enabled in the vault",
       "action": "Add tokenA to the vault's supported assets.",
@@ -3906,7 +3822,6 @@
         "contracts/guards/contractGuards/pancake/PancakeMasterChefV3Guard.sol",
         "contracts/guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeCLGaugeContractGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2RouterGuard.sol"
       ],
@@ -3919,7 +3834,6 @@
         "contracts/guards/contractGuards/pancake/PancakeMasterChefV3Guard.sol",
         "contracts/guards/contractGuards/pancake/PancakeNonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/uniswapV3/UniswapV3NonfungiblePositionGuard.sol",
-        "contracts/guards/contractGuards/velodrome/VelodromeCLGaugeContractGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2RouterGuard.sol"
       ],
@@ -3987,7 +3901,6 @@
       "description": "LP token not enabled in the vault",
       "action": "Add the LP token to the vault's assets.",
       "source": [
-        "contracts/guards/contractGuards/velodrome/VelodromeV2GaugeContractGuard.sol",
         "contracts/guards/contractGuards/velodrome/VelodromeV2RouterGuard.sol"
       ],
       "curated": true
@@ -4044,7 +3957,6 @@
       "action": "Approve only supported protocol contracts.",
       "source": [
         "contracts/guards/assetGuards/ERC20Guard.sol",
-        "contracts/guards/assetGuards/OpenAssetGuard.sol",
         "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol",
         "contracts/guards/contractGuards/ERC721ContractGuard.sol"
       ],
@@ -4113,22 +4025,6 @@
       "action": "Add USDC to the vault's supported assets.",
       "source": [
         "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol"
-      ],
-      "curated": true
-    },
-    "USDC required for HL": {
-      "description": "USDC cannot be removed while the vault uses Hyperliquid",
-      "action": "Remove the Hyperliquid position asset first, then remove USDC.",
-      "source": [
-        "contracts/guards/assetGuards/hyperliquid/HyperliquidERC20Guard.sol"
-      ],
-      "curated": true
-    },
-    "velodrome cl asset not enabled": {
-      "description": "Velodrome CL asset not enabled in the vault",
-      "action": "Add the Velodrome CL asset to the vault.",
-      "source": [
-        "contracts/guards/contractGuards/velodrome/VelodromeNonfungiblePositionGuard.sol"
       ],
       "curated": true
     },
@@ -4472,6 +4368,21 @@
       "source": [
         "contracts/swappers/swapper/Swapper.sol",
         "contracts/swappers/swapper/TokenTransferMethods.sol"
+      ],
+      "curated": true
+    },
+    "0x42b565c4": {
+      "signature": "PrecompileHelper__MarkPxPrecompileFailed(uint32)",
+      "description": "The Hyperliquid mark price precompile did not return a price for this perp.",
+      "action": "Check that the perp index exists on HyperCore and retry.",
+      "source": [
+        "contracts/guards/assetGuards/hyperliquid/HyperliquidPositionGuard.sol",
+        "contracts/guards/assetGuards/hyperliquid/HyperliquidSpotGuard.sol",
+        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreDepositWalletContractGuard.sol",
+        "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol",
+        "contracts/priceAggregators/HyperliquidSpotPriceAggregator.sol",
+        "contracts/utils/hyperliquid/InFlightTracker.sol",
+        "contracts/utils/hyperliquid/PrecompileHelper.sol"
       ],
       "curated": true
     },

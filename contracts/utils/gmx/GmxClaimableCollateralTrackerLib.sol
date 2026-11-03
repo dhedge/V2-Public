@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import {DhedgeNftTrackerStorage} from "../tracker/DhedgeNftTrackerStorage.sol";
 import {IGmxDataStore} from "../../interfaces/gmx/IGmxDataStore.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {IGmxMarket} from "../../interfaces/gmx/IGmxMarket.sol";

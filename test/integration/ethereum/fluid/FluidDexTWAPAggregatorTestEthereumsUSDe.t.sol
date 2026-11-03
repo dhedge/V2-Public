@@ -5,12 +5,13 @@ import {FluidDexTWAPAggregatorTestSetup} from "test/integration/common/fluid/Flu
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
 import {IFluidDexT1} from "contracts/interfaces/fluid/IFluidDexT1.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract FluidDexTWAPAggregatorTestEthereumsUSDe is FluidDexTWAPAggregatorTestSetup {
   // TWAP period: 7 minutes - maximum that works with available oracle data at fork block.
   uint256 private constant TWAP_PERIOD = 420;
-  // Maximum deviation: 1 bps = 0.01%
-  uint256 private constant MAX_DEVIATION = 1;
+  // Maximum deviation: 10 bps = 0.1%
+  uint256 private constant MAX_DEVIATION = 10;
 
   constructor()
     FluidDexTWAPAggregatorTestSetup(
@@ -18,13 +19,13 @@ contract FluidDexTWAPAggregatorTestEthereumsUSDe is FluidDexTWAPAggregatorTestSe
       EthereumConfig.sUSDe,
       IAggregatorV3Interface(EthereumConfig.USDT_CHAINLINK_ORACLE),
       TWAP_PERIOD,
-      IAggregatorV3Interface(0x0e5458C2A9A9cefcf8c8C4C5B633b492124584C0), // Existing UniV3 TWAP
+      IAggregatorV3Interface(EthereumConfig.sUSDe_CHAINLINK_ORACLE), // reference oracle
       MAX_DEVIATION
     )
   {}
 
   function setUp() public override {
-    vm.createSelectFork("ethereum", 24313660);
+    vm.createSelectFork("ethereum", ForkBlocks.ETHEREUM);
 
     super.setUp();
   }

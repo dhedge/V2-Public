@@ -38,10 +38,12 @@
           "assetType": "40",
           "specificOracleConfig": {
             "spotIndex": 182,
-            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+            "referencePerpAssetId": 110003,
+            "maxDeviationBps": 300
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x626a390FdA6cb505f5fBf57CeE141F822EF762bc"
+          "oracleAddress": "0xbF0a0561367d8f5692BC5452d870Ec317f29B31c"
         },
         {
           "assetName": "UBTC",
@@ -49,10 +51,12 @@
           "assetType": "40",
           "specificOracleConfig": {
             "spotIndex": 142,
-            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+            "referencePerpAssetId": 0,
+            "maxDeviationBps": 200
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0xa670Fe17a4e7B1D7aD80d65E67884Bc4E220ba45"
+          "oracleAddress": "0xa42C4e29826306EFaC23aD033289AA7c1b5A42D9"
         },
         {
           "assetName": "UETH",
@@ -60,10 +64,12 @@
           "assetType": "40",
           "specificOracleConfig": {
             "spotIndex": 151,
-            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+            "referencePerpAssetId": 1,
+            "maxDeviationBps": 200
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x9304E8329090BF0f7Cf7dCF6E78020B9fb9ae5e7"
+          "oracleAddress": "0x1518f48f3Fc30EA60D22218673b36752e6916D06"
         },
         {
           "assetName": "USOL",
@@ -71,10 +77,12 @@
           "assetType": "40",
           "specificOracleConfig": {
             "spotIndex": 156,
-            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+            "referencePerpAssetId": 5,
+            "maxDeviationBps": 200
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0xB29aaD90CAe77a35293A61c8ED464cdD373381d9"
+          "oracleAddress": "0xE5988e98dEA32cB2110ddd494917B7F799447918"
         },
         {
           "assetName": "HYPE",
@@ -82,10 +90,12 @@
           "assetType": "40",
           "specificOracleConfig": {
             "spotIndex": 107,
-            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+            "referencePerpAssetId": 159,
+            "maxDeviationBps": 300
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0xB06605849b9827512205278634DD29316d3e975F"
+          "oracleAddress": "0x901b501764DB7B58bc2a7D95CCD038EcA38a1ca3"
         },
         {
           "assetName": "UZEC",
@@ -93,10 +103,12 @@
           "assetType": "40",
           "specificOracleConfig": {
             "spotIndex": 272,
-            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+            "referencePerpAssetId": 214,
+            "maxDeviationBps": 500
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0x3562202bc04F6A51E7F25719f2fE6f67C91Fc048"
+          "oracleAddress": "0x69Ac07e5fDcC550Db27C4D4f1D6c0604d80fd150"
         },
         {
           "assetName": "UPUMP",
@@ -104,10 +116,12 @@
           "assetType": "40",
           "specificOracleConfig": {
             "spotIndex": 188,
-            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"
+            "usdcUsdFeed": "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B",
+            "referencePerpAssetId": 200,
+            "maxDeviationBps": 300
           },
           "oracleType": "HyperliquidSpotPriceAggregator",
-          "oracleAddress": "0xF3BCb05975b6e8A1c97FA0A10aF704dDa059CB50"
+          "oracleAddress": "0xaD8060d84738Ff337b2EdB0f9544dc913e0a618F"
         }
       ],
       "USDPriceAggregator": "0x14EB3ab377265cfaEA63386355A556C2e044A9C2",
@@ -118,7 +132,7 @@
       "PoolLogic": "0xB577F6a5E6fC90c2a8761eD303f717b6570D15c4",
       "PoolManagerLogicProxy": "0xfaf89b1Fd08CA3fE2744D03569958dd285DCdC32",
       "PoolManagerLogic": "0x3Ac4c357d3000E391532f30A508f8Df6CAd19387",
-      "Governance": "0x509Bc4e19E58041cD835F65541dAc23F67B7a9db",
+      "Governance": "0xCE052Ea9c32Ac94958f543729ACdE73e1b615191",
       "PoolFactoryProxy": "0x615037C2Df6FA97634c5aD2d8144708b9dd3B176",
       "PoolFactory": "0x574b15cEC9c1F7eE3DB06EC07f61Bca4e683Eb00",
       "SlippageAccumulator": "0x7E3d6d84046783721260ae8E5Fa7D29Bd227EE6A",
@@ -130,12 +144,12 @@
       "EasySwapperV2Proxy": "0x47065E508433E22d73Be3c5B61EB9abafD450364",
       "EasySwapperV2": "0x9686f6Ce4AA4CCD0446453FFE2a97eEe9e331656",
       "KyberSwapRouterV2ContractGuard": "0x41276b2144ac99Fff3CCBb924934576ADB92f579",
-      "HyperliquidPositionGuard": "0x9C0283D4A3782549879Ec6EB45bED1efc2e6EeA1",
+      "HyperliquidPositionGuard": "0xcb3B55Df043A32570092E851E69191Fb8BD7C310",
       "HyperliquidSpotGuard": "0x62Cb27b5e8DCE5B008D1FBB2855Bd34b4CbA9d62",
       "HyperliquidCoreWriterContractGuardProxy": "0x69bAd630798814588Ed024F9DFf3Aac1bC3533D2",
-      "HyperliquidCoreWriterContractGuard": "0x4A6B8076F143266f2Fe41Df138c80006fBD2566D",
+      "HyperliquidCoreWriterContractGuard": "0x78676D1C508Ca9F92A35C71595DAFD74c62BfC1F",
       "HyperliquidCoreDepositWalletContractGuard": "0x5a14c3A5e2176593B1A74048B44c45D317dB4fb6",
-      "HyperliquidERC20Guard": "0xdAf333e3B2E7Da8b11499C8e136DB431e7dEF498",
+      "HyperliquidERC20Guard": "0xA042255B14B327f8Ce7E9efa778d4D6ba52ab3a6",
       "PoolLimitOrderManagerProxy": "0x6b696eA2602068a7043C92961B5F202a65A3eF9C",
       "PoolLimitOrderManager": "0x6660324DBd2333B2b22d368FCc6D9de1580EC2cA",
       "AcrossContractGuard": "0x43804F6a5fF927446C1b4EfcE86601Bb3c71EEe2",
@@ -149,7 +163,7 @@
       "chainId": 999,
       "name": "unknown"
     },
-    "lastUpdated": "Sun, 13 Sep 2026 13:22:35 GMT",
+    "lastUpdated": "Sun, 01 Nov 2026 16:29:11 GMT",
     "config": {
       "hyperliquidCoreWriterGuard": {
         "approvedPerps": [
@@ -161,6 +175,11 @@
           {
             "perpName": "ETH",
             "assetId": 1,
+            "approved": true
+          },
+          {
+            "perpName": "ATOM",
+            "assetId": 2,
             "approved": true
           },
           {
@@ -179,13 +198,28 @@
             "approved": true
           },
           {
+            "perpName": "OP",
+            "assetId": 9,
+            "approved": true
+          },
+          {
             "perpName": "LTC",
             "assetId": 10,
             "approved": true
           },
           {
+            "perpName": "ARB",
+            "assetId": 11,
+            "approved": true
+          },
+          {
             "perpName": "DOGE",
             "assetId": 12,
+            "approved": true
+          },
+          {
+            "perpName": "INJ",
+            "assetId": 13,
             "approved": true
           },
           {
@@ -204,13 +238,28 @@
             "approved": true
           },
           {
+            "perpName": "LDO",
+            "assetId": 17,
+            "approved": true
+          },
+          {
             "perpName": "LINK",
             "assetId": 18,
             "approved": true
           },
           {
+            "perpName": "STX",
+            "assetId": 19,
+            "approved": true
+          },
+          {
             "perpName": "XRP",
             "assetId": 25,
+            "approved": true
+          },
+          {
+            "perpName": "BCH",
+            "assetId": 26,
             "approved": true
           },
           {
@@ -221,6 +270,11 @@
           {
             "perpName": "AAVE",
             "assetId": 28,
+            "approved": true
+          },
+          {
+            "perpName": "COMP",
+            "assetId": 29,
             "approved": true
           },
           {
@@ -244,8 +298,28 @@
             "approved": true
           },
           {
+            "perpName": "SEI",
+            "assetId": 40,
+            "approved": true
+          },
+          {
+            "perpName": "RUNE",
+            "assetId": 41,
+            "approved": true
+          },
+          {
+            "perpName": "ZRO",
+            "assetId": 46,
+            "approved": true
+          },
+          {
             "perpName": "DOT",
             "assetId": 48,
+            "approved": true
+          },
+          {
+            "perpName": "TIA",
+            "assetId": 63,
             "approved": true
           },
           {
@@ -254,8 +328,48 @@
             "approved": true
           },
           {
+            "perpName": "PENDLE",
+            "assetId": 70,
+            "approved": true
+          },
+          {
+            "perpName": "FET",
+            "assetId": 72,
+            "approved": true
+          },
+          {
             "perpName": "NEAR",
             "assetId": 74,
+            "approved": true
+          },
+          {
+            "perpName": "FIL",
+            "assetId": 80,
+            "approved": true
+          },
+          {
+            "perpName": "kBONK",
+            "assetId": 85,
+            "approved": true
+          },
+          {
+            "perpName": "JUP",
+            "assetId": 90,
+            "approved": true
+          },
+          {
+            "perpName": "JTO",
+            "assetId": 94,
+            "approved": true
+          },
+          {
+            "perpName": "WIF",
+            "assetId": 98,
+            "approved": true
+          },
+          {
+            "perpName": "ETC",
+            "assetId": 102,
             "approved": true
           },
           {
@@ -264,8 +378,23 @@
             "approved": true
           },
           {
+            "perpName": "STRK",
+            "assetId": 113,
+            "approved": true
+          },
+          {
             "perpName": "TAO",
             "assetId": 116,
+            "approved": true
+          },
+          {
+            "perpName": "AR",
+            "assetId": 117,
+            "approved": true
+          },
+          {
+            "perpName": "ETHFI",
+            "assetId": 121,
             "approved": true
           },
           {
@@ -274,13 +403,73 @@
             "approved": true
           },
           {
+            "perpName": "EIGEN",
+            "assetId": 130,
+            "approved": true
+          },
+          {
+            "perpName": "RENDER",
+            "assetId": 140,
+            "approved": true
+          },
+          {
+            "perpName": "POL",
+            "assetId": 142,
+            "approved": true
+          },
+          {
+            "perpName": "XLM",
+            "assetId": 154,
+            "approved": true
+          },
+          {
+            "perpName": "SAND",
+            "assetId": 156,
+            "approved": true
+          },
+          {
+            "perpName": "IOTA",
+            "assetId": 157,
+            "approved": true
+          },
+          {
+            "perpName": "ALGO",
+            "assetId": 158,
+            "approved": true
+          },
+          {
             "perpName": "HYPE",
             "assetId": 159,
             "approved": true
           },
           {
+            "perpName": "VIRTUAL",
+            "assetId": 162,
+            "approved": true
+          },
+          {
+            "perpName": "PENGU",
+            "assetId": 163,
+            "approved": true
+          },
+          {
             "perpName": "FARTCOIN",
             "assetId": 165,
+            "approved": true
+          },
+          {
+            "perpName": "SPX",
+            "assetId": 171,
+            "approved": true
+          },
+          {
+            "perpName": "MORPHO",
+            "assetId": 173,
+            "approved": true
+          },
+          {
+            "perpName": "TRUMP",
+            "assetId": 174,
             "approved": true
           },
           {
@@ -319,6 +508,16 @@
             "approved": true
           },
           {
+            "perpName": "ICP",
+            "assetId": 219,
+            "approved": true
+          },
+          {
+            "perpName": "AERO",
+            "assetId": 220,
+            "approved": true
+          },
+          {
             "perpName": "LIT",
             "assetId": 223,
             "approved": true
@@ -326,6 +525,16 @@
           {
             "perpName": "XMR",
             "assetId": 224,
+            "approved": true
+          },
+          {
+            "perpName": "DASH",
+            "assetId": 226,
+            "approved": true
+          },
+          {
+            "perpName": "GRAM",
+            "assetId": 230,
             "approved": true
           },
           {

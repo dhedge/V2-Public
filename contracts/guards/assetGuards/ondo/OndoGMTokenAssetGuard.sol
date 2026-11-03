@@ -3,14 +3,13 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {ERC20Guard} from "../ERC20Guard.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
+import {NonDepositAssetGuard} from "../shared/NonDepositAssetGuard.sol";
 import {IAssetGuard} from "../../../interfaces/guards/IAssetGuard.sol";
 import {IComplexAssetGuard} from "../../../interfaces/guards/IComplexAssetGuard.sol";
 import {IERC20Extended} from "../../../interfaces/IERC20Extended.sol";
-import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {IGMTokenManager} from "../../../interfaces/ondo/IGMTokenManager.sol";
 import {IOndoGMSwap} from "../../../interfaces/ondo/IOndoGMSwap.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
@@ -27,7 +26,7 @@ import {WithdrawalHelperLib} from "../../../utils/WithdrawalHelperLib.sol";
 ///         attestation in `withdrawData`; raw GM is never delivered. The 4-arg overload
 ///         (empty `withdrawData`) reverts — unless the depositor's GM portion is sub-$1 dust
 ///         that Ondo can't swap, in which case it skips the redeem and leaves the dust behind.
-contract OndoGMTokenAssetGuard is ERC20Guard, IComplexAssetGuard, AutomationBase, IAddAssetCheckGuard {
+contract OndoGMTokenAssetGuard is ERC20Guard, IComplexAssetGuard, AutomationBase, NonDepositAssetGuard {
   using SafeMath for uint256;
 
   /// @notice Frontend-supplied per-withdrawal payload, embedded into `ComplexAsset.withdrawData`.
@@ -40,9 +39,6 @@ contract OndoGMTokenAssetGuard is ERC20Guard, IComplexAssetGuard, AutomationBase
     IGMTokenManager.Quote quote;
     uint256 amountOutMinimum;
   }
-
-  // solhint-disable-next-line const-name-snakecase
-  bool public constant override isAddAssetCheckGuard = true;
 
   uint256 internal constant BPS_DENOMINATOR = 10_000;
 
@@ -171,10 +167,6 @@ contract OndoGMTokenAssetGuard is ERC20Guard, IComplexAssetGuard, AutomationBase
     // `_portionAmount` does getBalance × portion / 1e18 — division rounds down.
     // Shave 0.01% so quoted amount stays at or below the on-chain `portionAmount` despite fee accrual.
     gmTokenAmount = WithdrawalHelperLib.applyPortionShrinkBuffer(portionAmount);
-  }
-
-  function addAssetCheck(address, IHasSupportedAsset.Asset calldata _asset) external pure override {
-    require(!_asset.isDeposit, "deposit not supported");
   }
 
   function _portionAmount(address _pool, address _asset, uint256 _portion) internal view returns (uint256) {

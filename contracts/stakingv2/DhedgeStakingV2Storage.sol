@@ -38,9 +38,9 @@ pragma abicoder v2;
 import "./interfaces/IDhedgeStakingV2.sol";
 import "./interfaces/IDhedgeStakingV2NFTJson.sol";
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract DhedgeStakingV2Storage is IDhedgeStakingV2Storage, OwnableUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;

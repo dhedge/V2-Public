@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.6 <0.9.0;
+pragma solidity 0.8.28;
 
 import {ITokenRegistry} from "contracts/interfaces/hyperliquid/ITokenRegistry.sol";
 import {HLConstants} from "./HLConstants.sol";

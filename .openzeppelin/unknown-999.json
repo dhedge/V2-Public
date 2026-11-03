@@ -4473,7 +4473,7 @@
             "label": "dexIdStatus",
             "offset": 0,
             "slot": "4",
-            "type": "t_struct(UintToUintMap)5025_storage",
+            "type": "t_struct(UintToUintMap)6285_storage",
             "contract": "HyperliquidCoreWriterContractGuard",
             "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:83"
           },
@@ -4481,7 +4481,7 @@
             "label": "_approvedAssetIds",
             "offset": 0,
             "slot": "7",
-            "type": "t_struct(UintSet)7305_storage",
+            "type": "t_struct(UintSet)8565_storage",
             "contract": "HyperliquidCoreWriterContractGuard",
             "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:87"
           },
@@ -4489,7 +4489,7 @@
             "label": "_apiWalletEnabledPools",
             "offset": 0,
             "slot": "9",
-            "type": "t_struct(AddressSet)7148_storage",
+            "type": "t_struct(AddressSet)8408_storage",
             "contract": "HyperliquidCoreWriterContractGuard",
             "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:91"
           },
@@ -4500,6 +4500,233 @@
             "type": "t_address",
             "contract": "HyperliquidCoreWriterContractGuard",
             "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:97"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_bytes32)": {
+            "label": "mapping(bytes32 => bytes32)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint64,t_bool)": {
+            "label": "mapping(uint64 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AddressSet)8408_storage": {
+            "label": "struct EnumerableSet.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)8093_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Bytes32Set)8287_storage": {
+            "label": "struct EnumerableSet.Bytes32Set",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)8093_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Bytes32ToBytes32Map)6071_storage": {
+            "label": "struct EnumerableMap.Bytes32ToBytes32Map",
+            "members": [
+              {
+                "label": "_keys",
+                "type": "t_struct(Bytes32Set)8287_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_values",
+                "type": "t_mapping(t_bytes32,t_bytes32)",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(Set)8093_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_positions",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)8565_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)8093_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintToUintMap)6285_storage": {
+            "label": "struct EnumerableMap.UintToUintMap",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Bytes32ToBytes32Map)6071_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73"
+            }
+          ]
+        }
+      }
+    },
+    "fee1c774ec636a37d0f576b9af542c633827c6143ceed948c8b2021ce83e44df": {
+      "address": "0x78676D1C508Ca9F92A35C71595DAFD74c62BfC1F",
+      "txHash": "0xce537cbc1d73cb3c5069f17ffc0f77ecbaf622a15fa970de4f21c5575bf2046b",
+      "layout": {
+        "storage": [
+          {
+            "label": "__deprecated_dHedgePoolsWhitelist",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:67",
+            "renamedFrom": "dHedgePoolsWhitelist"
+          },
+          {
+            "label": "approvedAssets",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_uint64,t_bool)",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:71"
+          },
+          {
+            "label": "maxPermittedSlippage",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint64",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:74"
+          },
+          {
+            "label": "_spotActionBlockNumber",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:80"
+          },
+          {
+            "label": "dexIdStatus",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_struct(UintToUintMap)5025_storage",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:86"
+          },
+          {
+            "label": "_approvedAssetIds",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_struct(UintSet)7305_storage",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:90"
+          },
+          {
+            "label": "_apiWalletEnabledPools",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_struct(AddressSet)7148_storage",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:94"
+          },
+          {
+            "label": "withdrawalManager",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_address",
+            "contract": "HyperliquidCoreWriterContractGuard",
+            "src": "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:100"
           }
         ],
         "types": {
@@ -4638,7 +4865,7 @@
               "contract": "OwnableUpgradeable",
               "label": "_owner",
               "type": "t_address",
-              "src": "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol:24"
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24"
             }
           ],
           "erc7201:openzeppelin.storage.Initializable": [
@@ -4646,13 +4873,13 @@
               "contract": "Initializable",
               "label": "_initialized",
               "type": "t_uint64",
-              "src": "@openzeppelin/v5/contracts-upgradeable/proxy/utils/Initializable.sol:69"
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69"
             },
             {
               "contract": "Initializable",
               "label": "_initializing",
               "type": "t_bool",
-              "src": "@openzeppelin/v5/contracts-upgradeable/proxy/utils/Initializable.sol:73"
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73"
             }
           ]
         }

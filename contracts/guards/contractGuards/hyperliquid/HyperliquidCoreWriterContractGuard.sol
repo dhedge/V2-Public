@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {EnumerableMap} from "@openzeppelin/v5/contracts/utils/structs/EnumerableMap.sol";
-import {EnumerableSet} from "@openzeppelin/v5/contracts/utils/structs/EnumerableSet.sol";
-import {OwnableUpgradeable} from "@openzeppelin/v5/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {EnumerableMap} from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {TxDataUtils, BytesLib} from "../../../utils/TxDataUtils.sol";
 import {PrecompileHelper} from "../../../utils/hyperliquid/PrecompileHelper.sol";
@@ -14,7 +14,10 @@ import {IGuard} from "../../../interfaces/guards/IGuard.sol";
 import {ICoreWriter} from "../../../interfaces/hyperliquid/ICoreWriter.sol";
 import {ITransactionTypes} from "../../../interfaces/ITransactionTypes.sol";
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
+import {IPoolFactory} from "../../../interfaces/IPoolFactory.sol";
+import {IHasAssetInfo} from "../../../interfaces/IHasAssetInfo.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
+import {ISlippageAccumulator} from "../../../interfaces/ISlippageAccumulator.sol";
 import {IHyperliquidCoreWriterContractGuard} from "../../../interfaces/hyperliquid/IHyperliquidCoreWriterContractGuard.sol";
 
 /// @title HyperliquidCoreWriterContractGuard
@@ -96,8 +99,17 @@ contract HyperliquidCoreWriterContractGuard is
   ///      logic change.
   address public withdrawalManager;
 
+  /// @notice Shared budget for value a manager may concede through trading, 10% of the vault's value per 24
+  ///         hours in production. Every limit order is charged its worst-case concession.
+  /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+  ISlippageAccumulator public immutable override slippageAccumulator;
+
   /// @custom:oz-upgrades-unsafe-allow constructor
-  constructor() {
+  constructor(address _slippageAccumulator) {
+    require(_slippageAccumulator != address(0), "invalid address");
+
+    slippageAccumulator = ISlippageAccumulator(_slippageAccumulator);
+
     _disableInitializers();
   }
 
@@ -129,8 +141,9 @@ contract HyperliquidCoreWriterContractGuard is
     bytes calldata data
   ) external override returns (uint16 txType, bool isPublic) {
     address poolLogic = IPoolManagerLogic(poolManagerLogic).poolLogic();
+    address poolFactory = slippageAccumulator.poolFactory();
 
-    require(msg.sender == poolLogic, "caller must be pool logic");
+    require(msg.sender == poolLogic && IPoolFactory(poolFactory).isPool(poolLogic), "caller must be pool logic");
     require(getMethod(data) == ICoreWriter.sendRawAction.selector, "unsupported method");
     require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(_CORE_WRITER), "CoreWriter not supported asset");
 
@@ -163,11 +176,16 @@ contract HyperliquidCoreWriterContractGuard is
 
         // Base leg: either the system address has to be a supported asset or the EVM contract linked to
         // the spot asset.
-        require(
-          IHasSupportedAsset(poolManagerLogic).isSupportedAsset(getSystemAddress(baseTokenIndex)) ||
-            IHasSupportedAsset(poolManagerLogic).isSupportedAsset(tokenInfo(baseTokenIndex).evmContract),
-          "unsupported spot asset"
-        );
+        address baseAsset = getSystemAddress(baseTokenIndex);
+        if (!IHasSupportedAsset(poolManagerLogic).isSupportedAsset(baseAsset)) {
+          baseAsset = tokenInfo(baseTokenIndex).evmContract;
+          require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(baseAsset), "unsupported spot asset");
+        }
+
+        // The band and the slippage charge below measure the order against the raw spot price. Pricing the
+        // base through the AssetHandler reverts while that price is too far from the asset's oracle, so no
+        // spot order is accepted at a broken price, whatever its limit.
+        IHasAssetInfo(poolFactory).getAssetPrice(baseAsset);
 
         // Record the block when a spot order is placed for the pool to disallow removal of any spot asset
         // from the supported assets list until the order's settlement window has elapsed.
@@ -186,7 +204,7 @@ contract HyperliquidCoreWriterContractGuard is
         }
       }
 
-      uint256 price = _getPrice(params.asset, assetType);
+      uint256 price = _getPrice(params.asset, assetType, params.isBuy);
 
       // Resting spot orders (GTC/ALO) must be sells. A resting spot buy can fill after the post-action
       // removal lock expires and deliver base tokens as a NAV-invisible balance (the asset may have been
@@ -203,7 +221,7 @@ contract HyperliquidCoreWriterContractGuard is
         revert("unsupported tif");
       }
 
-      // Bound every accepted order (GTC/IOC/ALO) to the oracle price. The check is one-directional,
+      // Bound every accepted order (GTC/IOC/ALO) to the reference price. The check is one-directional,
       // so it only restricts the aggressive/loss-making side: a resting take-profit and a passive
       // ALO maker pass unaffected, while a GTC priced through the book (a taker fill with no slippage
       // cap) is blocked just like an IOC.
@@ -216,6 +234,8 @@ contract HyperliquidCoreWriterContractGuard is
         uint256 maxAcceptablePrice = price - slippageAmount;
         require(maxAcceptablePrice <= params.limitPx, "Slippage exceeds limit");
       }
+
+      _chargeConcession(poolManagerLogic, params, price);
 
       return (uint16(ITransactionTypes.TransactionType.HyperliquidLimitOrder), false);
     } else if (actionId == HyperliquidConstants.ACTION_SPOT_SEND) {
@@ -360,12 +380,14 @@ contract HyperliquidCoreWriterContractGuard is
     }
   }
 
-  /// @notice Gets the price in the same format as limitPx.
+  /// @notice Gets the reference price an order's band and concession are measured against, in the same
+  ///         format as limitPx.
   /// @dev Returns price in 8 decimals.
   /// @param assetId The asset ID.
   /// @param assetType The asset type.
+  /// @param isBuy The order side.
   /// @return price The price for validation.
-  function _getPrice(uint64 assetId, AssetType assetType) private view returns (uint256 price) {
+  function _getPrice(uint64 assetId, AssetType assetType, bool isBuy) private view returns (uint256 price) {
     if (assetType == AssetType.CORE_SPOT) {
       // CORE_SPOT: assetId = 10000 + spotIndex
       // Return normalized price for spot assets to get it in the same format as limitPx
@@ -377,7 +399,15 @@ contract HyperliquidCoreWriterContractGuard is
       // is derived from the asset ID as (assetId - 100000).
       uint32 perpIndex = (assetType == AssetType.CORE_PERP) ? uint32(assetId) : uint32(assetId - 100_000);
 
-      return normalizedOraclePx(perpIndex) * 1e2;
+      // The vault's perp equity is valued at the mark price, while the oracle is the harder of the two to
+      // move on a thin book. Measure against whichever one the order concedes more to: the lower for a
+      // buy, the higher for a sell. An order at the oracle then still pays for the distance to the mark.
+      uint256 oracle = normalizedOraclePx(perpIndex) * 1e2;
+      uint256 mark = normalizedMarkPx(perpIndex) * 1e2;
+
+      if (isBuy) return oracle < mark ? oracle : mark;
+
+      return oracle > mark ? oracle : mark;
     }
   }
 
@@ -393,6 +423,33 @@ contract HyperliquidCoreWriterContractGuard is
     }
 
     return tokenInfo(token).evmContract;
+  }
+
+  /// @dev The band in `txGuard` bounds one order. The budget bounds all of a manager's orders over the
+  ///      accumulator's decay window: each order is charged the value it concedes if its whole size fills at
+  ///      its limit, measured against the vault's value so leverage and order count cannot scale it. An order
+  ///      priced at or on the passive side of the reference (a resting take-profit, a post-only maker)
+  ///      concedes nothing. `limitPx` and `sz` are both 1e8-scaled, so their product is USD with 16 decimals.
+  function _chargeConcession(address poolManagerLogic, LimitOrderParams memory params, uint256 price) private {
+    uint256 concessionPerUnit;
+
+    if (params.isBuy) {
+      if (params.limitPx > price) concessionPerUnit = params.limitPx - price;
+    } else if (price > params.limitPx) {
+      concessionPerUnit = price - params.limitPx;
+    }
+
+    if (concessionPerUnit == 0) return;
+
+    uint256 concession = concessionPerUnit * params.sz * 1e2;
+    uint256 totalValue = IPoolManagerLogic(poolManagerLogic).totalFundValue();
+
+    slippageAccumulator.updateSlippageImpactByValue(
+      poolManagerLogic,
+      _CORE_WRITER,
+      totalValue,
+      totalValue > concession ? totalValue - concession : 0
+    );
   }
 
   /////////////////////////////////////////////

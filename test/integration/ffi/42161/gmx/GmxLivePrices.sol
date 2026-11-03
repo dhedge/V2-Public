@@ -9,9 +9,9 @@ abstract contract GmxLivePrices {
   Vm private constant GMX_VM = Vm(address(bytes20(uint160(uint256(keccak256("hevm cheat code"))))));
 
   string internal constant GMX_LIVE_PRICES_SCRIPT = "test/integration/ffi/42161/gmx/gmxLivePrices.ts";
-  // Keep this true for fast deterministic development runs. Set it to false to
-  // fetch current GMX signed reports and select a matching live Arbitrum block.
-  // If the archive RPC rate-limits parallel reads, run live mode with --threads 1.
+  // Keep this true for fast deterministic runs against the committed fixture.
+  // `pnpm test-freshness:repin` overrides it for one live suite run, which fetches
+  // current GMX signed reports and refreshes the fixture at their Arbitrum block.
   //
   // The fork block always comes from livePrices.forkBlockNumber, consumed at
   // GmxTestSetup.t.sol:149 (vm.createSelectFork). True: block from the cached
@@ -28,11 +28,12 @@ abstract contract GmxLivePrices {
   }
 
   function _getLivePrices(address[] memory requestedTokens) internal returns (LivePrices memory prices) {
+    bool useCachedData = GMX_VM.envOr("USE_CACHED_GMX_DATA", USE_CACHED_GMX_DATA);
     string[] memory command = new string[](requestedTokens.length + 4);
     command[0] = GMX_VM.envOr("NODE_BINARY", string("node"));
     command[1] = "--experimental-strip-types";
     command[2] = GMX_LIVE_PRICES_SCRIPT;
-    command[3] = USE_CACHED_GMX_DATA ? "true" : "false";
+    command[3] = useCachedData ? "true" : "false";
 
     for (uint256 i; i < requestedTokens.length; ++i) {
       command[i + 4] = GMX_VM.toString(requestedTokens[i]);

@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import {Test} from "forge-std/Test.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";

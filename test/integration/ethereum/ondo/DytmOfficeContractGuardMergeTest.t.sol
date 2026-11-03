@@ -8,6 +8,7 @@ import {IDytmAccountSplitterAndMerger} from "contracts/interfaces/dytm/IDytmAcco
 import {DytmParamStructs} from "contracts/utils/dytm/DytmParamStructs.sol";
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
 import {DytmOfficeContractGuardMergeTestSetup} from "test/integration/common/dytm/DytmOfficeContractGuardMergeTestSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @title DytmOfficeContractGuardMergeTest
 /// @notice Tests the manager-initiated DYTM `MERGE_ACCOUNTS` path on `DytmOfficeContractGuard`.
@@ -18,7 +19,7 @@ contract DytmOfficeContractGuardMergeTest is DytmOfficeContractGuardMergeTestSet
   uint88 internal constant NON_WHITELISTED_MARKET_ID = 999;
   uint64 internal constant FULL_FRACTION = 1e18;
 
-  constructor() EthereumSetup(24724485) {}
+  constructor() EthereumSetup(ForkBlocks.ETHEREUM) {}
 
   function setUp() public override(DytmOfficeContractGuardMergeTestSetup, EthereumSetup) {
     EthereumSetup.setUp();

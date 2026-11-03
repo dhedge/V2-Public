@@ -1,9 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { tryVerify } from "../../deploymentHelpers";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames } from "../../types";
 
-// Reuse the versions.json PoolLogicLib even if its bytecode differs from source. False = deploy fresh on mismatch.
-const REUSE_EXISTING_POOL_LOGIC_LIB = true;
+// Deploy a fresh PoolLogicLib when the recorded one's bytecode differs from source. True = reuse it anyway.
+const REUSE_EXISTING_POOL_LOGIC_LIB = false;
 
 // Normalise a library's runtime bytecode before comparing it to the compiled artifact:
 //  - strip the leading PUSH20 <self-address> guard — a deployed lib embeds its own address, so it

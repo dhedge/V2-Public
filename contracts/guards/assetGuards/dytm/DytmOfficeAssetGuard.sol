@@ -2,8 +2,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
 import {ClosedAssetGuard} from "../ClosedAssetGuard.sol";
 import {IDytmPeriphery} from "../../../interfaces/dytm/IDytmPeriphery.sol";
 import {DytmParamStructs} from "../../../utils/dytm/DytmParamStructs.sol";
@@ -12,9 +12,9 @@ import {IDytmOffice} from "../../../interfaces/dytm/IDytmOffice.sol";
 import {IDytmDelegatee} from "../../../interfaces/dytm/IDytmDelegatee.sol";
 import {DytmSplitTokenIdTracker} from "./DytmSplitTokenIdTracker.sol";
 import {DytmWithdrawalCalculator} from "./DytmWithdrawalCalculator.sol";
+import {NonDepositAssetGuard} from "../shared/NonDepositAssetGuard.sol";
 import {DytmHelperLib} from "../../../utils/dytm/DytmHelperLib.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 
 /// @title Dytm Office Asset Guard
@@ -23,18 +23,17 @@ contract DytmOfficeAssetGuard is
   ClosedAssetGuard,
   DytmSplitTokenIdTracker,
   DytmWithdrawalCalculator,
-  IAddAssetCheckGuard
+  NonDepositAssetGuard
 {
   using SafeMath for uint256;
   using SafeCast for uint256;
 
-  bool public override isAddAssetCheckGuard = true;
-
   /// @notice Processor used by `DytmWithdrawLib` to run the DYTM unwind in an isolated context.
   address public immutable dytmWithdrawProcessor;
 
-  function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) external view override {
-    require(!_asset.isDeposit, "deposit not supported");
+  function _addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) internal view override {
+    super._addAssetCheck(_poolLogic, _asset);
+
     require(_useContractGuard().poolsWhitelist(_poolLogic), "pool not whitelisted");
   }
 

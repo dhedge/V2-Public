@@ -17,7 +17,7 @@
 
 pragma solidity 0.7.6;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {InitializableUpgradeabilityProxy} from "./InitializableUpgradeabilityProxy.sol";
 import {HasLogic} from "./HasLogic.sol";

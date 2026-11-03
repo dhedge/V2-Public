@@ -119,6 +119,7 @@ abstract contract PrecompileHelper {
   error PrecompileHelper__SpotIndexNotFound(uint64 tokenIndex);
   error PrecompileHelper__SpotPxPrecompileFailed(uint64 spotIndex);
   error PrecompileHelper__SpotInfoPrecompileFailed(uint64 spotIndex);
+  error PrecompileHelper__MarkPxPrecompileFailed(uint32 perpIndex);
   error PrecompileHelper__OraclePxPrecompileFailed(uint32 perpIndex);
   error PrecompileHelper__SummaryFetchFailed(address user, uint256 dexId);
   error PrecompileHelper__PerpAssetInfoPrecompileFailed(uint32 perpIndex);
@@ -146,6 +147,7 @@ abstract contract PrecompileHelper {
   address internal constant _TOKEN_INFO_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000000080C;
   address internal constant _ACCOUNT_MARGIN_SUMMARY_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000000080F;
   address internal constant _L1_BLOCK_NUMBER_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000809;
+  address internal constant _MARK_PX_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000806;
   address internal constant _ORACLE_PX_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000807;
   address internal constant _SPOT_PX_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000808;
   address internal constant _SPOT_INFO_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000000080b;
@@ -347,6 +349,14 @@ abstract contract PrecompileHelper {
     return spotPx(spotIndex) * 10 ** baseSzDecimals;
   }
 
+  /// @notice Returns perp mark price as a fixed-point integer with 6 decimals.
+  /// @param perpIndex The index of the perp asset.
+  /// @return normMarkPrice The normalized mark price.
+  function normalizedMarkPx(uint32 perpIndex) internal view returns (uint256) {
+    PerpAssetInfo memory info = perpAssetInfo(perpIndex);
+    return markPx(perpIndex) * 10 ** info.szDecimals;
+  }
+
   /// @notice Returns perp oracle price as a fixed-point integer with 6 decimals.
   /// @param perpIndex The index of the perp asset.
   /// @return normOraclePrice The normalized oracle price.
@@ -361,6 +371,15 @@ abstract contract PrecompileHelper {
   function spotPx(uint64 spotIndex) internal view returns (uint64) {
     (bool success, bytes memory result) = _SPOT_PX_PRECOMPILE_ADDRESS.staticcall(abi.encode(spotIndex));
     if (!success) revert PrecompileHelper__SpotPxPrecompileFailed(spotIndex);
+    return abi.decode(result, (uint64));
+  }
+
+  /// @notice Fetches mark price for a perp from the `MARK_PX_PRECOMPILE_ADDRESS`.
+  /// @param perpIndex The perp index of the asset.
+  /// @return markPrice The mark price of the asset.
+  function markPx(uint32 perpIndex) internal view returns (uint64 markPrice) {
+    (bool success, bytes memory result) = _MARK_PX_PRECOMPILE_ADDRESS.staticcall(abi.encode(perpIndex));
+    if (!success) revert PrecompileHelper__MarkPxPrecompileFailed(perpIndex);
     return abi.decode(result, (uint64));
   }
 

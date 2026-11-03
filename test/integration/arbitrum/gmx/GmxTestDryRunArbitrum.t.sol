@@ -3,10 +3,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {PoolManagerLogic} from "contracts/PoolManagerLogic.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";
+import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 
 import {DeploymentDryRunArbitrum} from "test/integration/utils/foundry/dryRun/DeploymentDryRunArbitrum.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
@@ -18,9 +19,10 @@ import {PoolFactory} from "contracts/PoolFactory.sol";
 import {GmxTestSharedData} from "test/integration/arbitrum/gmx/GmxTestSharedData.sol";
 import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {console} from "forge-std/console.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer {
-  constructor() DeploymentDryRunArbitrum(GmxTestSharedData.FORK_BLOCK_NUMBER, getTorosVaults()) {}
+  constructor() DeploymentDryRunArbitrum(ForkBlocks.ARBITRUM, getTorosVaults()) {}
 
   function setUp() public override {
     super.setUp();
@@ -29,7 +31,7 @@ contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer 
   }
 
   function getTorosVaults() internal pure returns (address[] memory torosVaults) {
-    torosVaults = new address[](45);
+    torosVaults = new address[](48);
 
     torosVaults[0] = ArbitrumConfig.ETHBULL3X;
     torosVaults[1] = ArbitrumConfig.ETHBULL2X;
@@ -76,6 +78,9 @@ contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer 
     torosVaults[42] = ArbitrumConfig.XRPBULL3X;
     torosVaults[43] = ArbitrumConfig.AAVEBEAR1X;
     torosVaults[44] = ArbitrumConfig.AAVEBULL2X;
+    torosVaults[45] = ArbitrumConfig.NEAR1X;
+    torosVaults[46] = ArbitrumConfig.NEARBULL2X;
+    torosVaults[47] = ArbitrumConfig.NEARBULL3X;
 
     return torosVaults;
   }
@@ -134,6 +139,17 @@ contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer 
 
       uint256 maxAllowedDiff = (beforePrice * toleranceBps) / 10_000;
 
+      assertGe(
+        maxAllowedDiff,
+        diff,
+        string(
+          abi.encodePacked("tokenPrice allowed diff out of bounds for vault: ", _addressToString(torosVaultsToCheck[i]))
+        )
+      );
+
+      // A freshly deployed vault that has not been funded yet has no token price to compare against.
+      if (beforePrice == 0) continue;
+
       // diff scaled to 0.0001% precision (4 decimals)
       uint256 diffScaled = (diff * 1_000_000) / beforePrice;
 
@@ -164,14 +180,24 @@ contract GmxTestDryRunArbitrum is DeploymentDryRunArbitrum, IntegrationDeployer 
           )
         );
       }
+    }
+  }
 
-      assertGe(
-        maxAllowedDiff,
-        diff,
-        string(
-          abi.encodePacked("tokenPrice allowed diff out of bounds for vault: ", _addressToString(torosVaultsToCheck[i]))
-        )
-      );
+  function test_near_vaults_can_enable_market_after_deployment() public {
+    address[3] memory nearVaults = [ArbitrumConfig.NEAR1X, ArbitrumConfig.NEARBULL2X, ArbitrumConfig.NEARBULL3X];
+    IHasSupportedAsset.Asset[] memory assetsToAdd = new IHasSupportedAsset.Asset[](1);
+    assetsToAdd[0] = IHasSupportedAsset.Asset({asset: GmxTestSharedData.GMX_NEAR_MARKET, isDeposit: false});
+
+    for (uint256 i; i < nearVaults.length; ++i) {
+      PoolLogic vault = PoolLogic(nearVaults[i]);
+      PoolManagerLogic managerLogic = PoolManagerLogic(vault.poolManagerLogic());
+      assertEq(vault.factory(), address(poolFactory));
+      assertTrue(poolFactory.isPool(nearVaults[i]));
+      assertTrue(managerLogic.isSupportedAsset(ArbitrumConfig.USDC));
+
+      vm.prank(managerLogic.manager());
+      managerLogic.changeAssets(assetsToAdd, new address[](0));
+      assertTrue(managerLogic.isSupportedAsset(GmxTestSharedData.GMX_NEAR_MARKET));
     }
   }
 }

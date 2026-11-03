@@ -3,8 +3,8 @@
 pragma solidity >=0.7.6 <0.9.0;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
-import {ProxyAdmin} from "@openzeppelin/contracts/proxy/ProxyAdmin.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/v3/contracts/proxy/ProxyAdmin.sol";
 
 import {Governance} from "contracts/Governance.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
@@ -14,6 +14,7 @@ import {PoolFactory} from "contracts/PoolFactory.sol";
 import {SlippageAccumulator} from "contracts/utils/SlippageAccumulator.sol";
 import {USDPriceAggregator} from "contracts/priceAggregators/USDPriceAggregator.sol";
 import {ERC20Guard} from "contracts/guards/assetGuards/ERC20Guard.sol";
+import {NestedVaultAssetGuard} from "contracts/guards/assetGuards/NestedVaultAssetGuard.sol";
 import {DhedgeNftTrackerStorage} from "contracts/utils/tracker/DhedgeNftTrackerStorage.sol";
 import {EasySwapperV2} from "contracts/swappers/easySwapperV2/EasySwapperV2.sol";
 import {WithdrawalVault} from "contracts/swappers/easySwapperV2/WithdrawalVault.sol";
@@ -40,6 +41,7 @@ abstract contract BackboneSetup is PoolTestHelpers, AssetTypes {
   SlippageAccumulator public slippageAccumulator;
   USDPriceAggregator public usdPriceAggregator;
   address public erc20Guard;
+  address public nestedVaultGuard;
   address public nftTrackerStorage;
   DhedgeNftTrackerStorage public nftTrackerStorageProxy;
   address public withdrawalVault;
@@ -66,6 +68,7 @@ abstract contract BackboneSetup is PoolTestHelpers, AssetTypes {
     poolFactory = address(new PoolFactory());
     usdPriceAggregator = new USDPriceAggregator();
     erc20Guard = address(new ERC20Guard());
+    nestedVaultGuard = address(new NestedVaultAssetGuard());
     nftTrackerStorage = address(new DhedgeNftTrackerStorage());
     withdrawalVault = address(new WithdrawalVault());
 
@@ -103,6 +106,7 @@ abstract contract BackboneSetup is PoolTestHelpers, AssetTypes {
     poolFactoryProxy.addCustomCooldownWhitelist(address(easySwapperV2Proxy));
 
     governance.setAssetGuard(uint16(AssetTypeIncomplete.CHAINLINK), erc20Guard);
+    governance.setAssetGuard(uint16(AssetTypeIncomplete.NESTED_VAULT), nestedVaultGuard);
 
     // Disable chainlink expiry timeout.
     assetHandlerProxy.setChainlinkTimeout(86400 * 365); // 1 year

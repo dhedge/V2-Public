@@ -1,7 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-import { proposeTx, tryVerify } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../types";
+import { OZ_V3_INITIALIZER_KINDS } from "../../helpers/upgradeValidation";
 
 export const nftTrackerJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -26,7 +28,9 @@ export const nftTrackerJob: IJob<void> = async (
       console.log("Will deploy DhedgeNftTrackerStorage");
 
       const DhedgeNftTrackerStorage = await ethers.getContractFactory("DhedgeNftTrackerStorage");
-      const dhedgeNftTrackerStorageProxy = await upgrades.deployProxy(DhedgeNftTrackerStorage, [poolFactoryProxy]);
+      const dhedgeNftTrackerStorageProxy = await upgrades.deployProxy(DhedgeNftTrackerStorage, [poolFactoryProxy], {
+        unsafeAllow: OZ_V3_INITIALIZER_KINDS,
+      });
       await dhedgeNftTrackerStorageProxy.deployed();
 
       const dhedgeNftTrackerStorageImplementation = await getImplementationAddress(
@@ -58,6 +62,7 @@ export const nftTrackerJob: IJob<void> = async (
       const dhedgeNftTrackerStorage = await upgrades.prepareUpgrade(
         dhedgeNftTrackerStorageProxy,
         DhedgeNftTrackerStorage,
+        { unsafeAllow: OZ_V3_INITIALIZER_KINDS },
       );
       console.log("dhedgeNftTrackerStorage deployed to: ", dhedgeNftTrackerStorage);
 

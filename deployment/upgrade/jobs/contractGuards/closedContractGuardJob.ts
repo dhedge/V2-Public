@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import { IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 export const closedContractGuardJob: IJob<void> = async (

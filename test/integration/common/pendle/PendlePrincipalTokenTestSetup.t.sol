@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import {PendlePTAssetGuard} from "contracts/guards/assetGuards/pendle/PendlePTAssetGuard.sol";
 import {PendleRouterV4ContractGuard} from "contracts/guards/contractGuards/pendle/PendleRouterV4ContractGuard.sol";
@@ -1293,7 +1293,7 @@ abstract contract PendlePrincipalTokenTestSetup is BackboneSetup, IntegrationDep
     testPool.execTransaction(pendleRouterV4, buyPTCalldata);
   }
 
-  /// @dev The economic bound (AR-001 defense): a manager-initiated PT swap whose received value falls more than
+  /// @dev The economic bound: a manager-initiated PT swap whose received value falls more than
   ///      the allowed slippage below the value spent must revert, even through the plain AMM path. Modelled by
   ///      marking the PT oracle above its real reading so the underlying received is worth too little.
   function test_revert_sell_PT_when_value_loss_exceeds_cap() public {

@@ -75,7 +75,7 @@ The 4-arg `withdrawProcessing` overload always reverts — Ondo always requires 
 
 ## 2. DYTM-Collateral Path
 
-When GM lives inside a DYTM Office account as collateral (asset type 106 at the pool level), withdrawal goes through EasySwapperV2's generic DYTM-unwind dispatcher. The dispatcher does not know anything about Ondo specifically — it just executes a frontend-built `UnwindPlan.actions[]` as a flat multicall inside a DYTM `delegationCall`, then enforces drain and slippage post-conditions. See [`dytm-integration.md`](./dytm-integration.md) for the full mechanics.
+When GM lives inside a DYTM Office account as collateral (asset type 106 at the pool level), withdrawal goes through EasySwapperV2's generic DYTM-unwind dispatcher. The dispatcher does not know anything about Ondo specifically — it just executes a frontend-built `UnwindPlan.actions[]` as a flat multicall inside a DYTM `delegationCall`, then enforces drain and slippage post-conditions. See [`dytmIntegration.md`](./dytmIntegration.md) for the full mechanics.
 
 ### End-to-end flow
 

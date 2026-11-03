@@ -1,8 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IDeployedContractGuard, IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses } from "../../../types";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 
 export const angleDistributorContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,

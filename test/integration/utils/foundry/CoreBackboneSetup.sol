@@ -3,7 +3,7 @@
 pragma solidity >=0.7.6 <0.9.0;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/v5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {IPoolFactory} from "contracts/interfaces/IPoolFactory.sol";

@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 
 import {ITxTrackingGuard} from "../../../interfaces/guards/ITxTrackingGuard.sol";
@@ -48,6 +48,8 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
     address pool = IPoolManagerLogic(poolManagerLogic).poolLogic();
     address factory = IPoolLogic(pool).factory();
 
+    require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "cl asset not enabled");
+
     if (method == IRamsesNonfungiblePositionManager.mint.selector) {
       IRamsesNonfungiblePositionManager.MintParams memory mintParams = abi.decode(
         params,
@@ -56,7 +58,6 @@ contract RamsesNonfungiblePositionGuard is NftTrackerConsumerGuard, ITxTrackingG
 
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token0), "unsupported asset: tokenA");
       require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(mintParams.token1), "unsupported asset: tokenB");
-      require(IHasSupportedAsset(poolManagerLogic).isSupportedAsset(to), "ramses cl asset not enabled");
       require(mintParams.veRamTokenId == 0, "veRamTokenId must be 0"); // CL Boosting deprecated
       require(pool == mintParams.recipient, "recipient is not pool");
 

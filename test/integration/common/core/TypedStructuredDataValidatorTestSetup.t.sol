@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {PoolLogic} from "contracts/PoolLogic.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";

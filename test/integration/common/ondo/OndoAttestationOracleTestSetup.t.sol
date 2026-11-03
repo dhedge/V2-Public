@@ -2,15 +2,15 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {IGMTokenManager} from "contracts/interfaces/ondo/IGMTokenManager.sol";
 import {IOndoAttestationOracle} from "contracts/interfaces/ondo/IOndoAttestationOracle.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 abstract contract OndoAttestationOracleTestSetup is BackboneSetup {
   // --- Real mainnet contracts ---
-  address public constant GM_TOKEN_MANAGER = 0x2c158BC456e027b2AfFCCadF1BDBD9f5fC4c5C8c;
   address public constant NFLX_ON = 0x032deC3372F25C41EA8054B4987a7c4832CDB338;
 
   // --- Test attestation signer ---
@@ -53,15 +53,15 @@ abstract contract OndoAttestationOracleTestSetup is BackboneSetup {
     super.setUp();
 
     // Read domain separator and attestation signer role from the real GMTokenManager
-    domainSeparator = IGMTokenManager(GM_TOKEN_MANAGER).getDomainSeparator();
-    attestationSignerRole = IGMTokenManager(GM_TOKEN_MANAGER).ATTESTATION_SIGNER_ROLE();
+    domainSeparator = IGMTokenManager(EthereumConfig.ONDO_GM_TOKEN_MANAGER).getDomainSeparator();
+    attestationSignerRole = IGMTokenManager(EthereumConfig.ONDO_GM_TOKEN_MANAGER).ATTESTATION_SIGNER_ROLE();
 
     // Derive test signer
     signerAddress = vm.addr(SIGNER_PRIVATE_KEY);
 
     // Mock the attestation signer role check so our test signer is accepted
     vm.mockCall(
-      GM_TOKEN_MANAGER,
+      EthereumConfig.ONDO_GM_TOKEN_MANAGER,
       abi.encodeWithSignature("hasRole(bytes32,address)", attestationSignerRole, signerAddress),
       abi.encode(true)
     );
@@ -78,7 +78,7 @@ abstract contract OndoAttestationOracleTestSetup is BackboneSetup {
         INITIALIZE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           ONDO_USER_ID,
           MAX_PROOF_AGE,
           SANITY_DEVIATION_BPS,
@@ -251,7 +251,9 @@ abstract contract OndoAttestationOracleTestSetup is BackboneSetup {
   // ═══════════════════════════════════════════════════════════════════════
 
   function _getSanityCheckOracle() internal returns (address) {
-    (bool ok, bytes memory data) = GM_TOKEN_MANAGER.call(abi.encodeWithSignature("sanityCheckOracle()"));
+    (bool ok, bytes memory data) = EthereumConfig.ONDO_GM_TOKEN_MANAGER.call(
+      abi.encodeWithSignature("sanityCheckOracle()")
+    );
     require(ok, "sanityCheckOracle() failed");
     return abi.decode(data, (address));
   }
@@ -282,7 +284,7 @@ abstract contract OndoAttestationOracleTestSetup is BackboneSetup {
 
   function _mockMintingPaused(address _asset, bool _paused) internal {
     vm.mockCall(
-      GM_TOKEN_MANAGER,
+      EthereumConfig.ONDO_GM_TOKEN_MANAGER,
       abi.encodeWithSignature("gmTokenMintingPaused(address)", _asset),
       abi.encode(_paused)
     );
@@ -290,7 +292,7 @@ abstract contract OndoAttestationOracleTestSetup is BackboneSetup {
 
   function _mockRedemptionsPaused(address _asset, bool _paused) internal {
     vm.mockCall(
-      GM_TOKEN_MANAGER,
+      EthereumConfig.ONDO_GM_TOKEN_MANAGER,
       abi.encodeWithSignature("gmTokenRedemptionsPaused(address)", _asset),
       abi.encode(_paused)
     );

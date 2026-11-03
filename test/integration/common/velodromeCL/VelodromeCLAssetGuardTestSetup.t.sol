@@ -2,7 +2,6 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {IVelodromeCLGauge} from "contracts/interfaces/velodrome/IVelodromeCLGauge.sol";
 // solhint-disable-next-line max-line-length
 import {IVelodromeNonfungiblePositionManager} from "contracts/interfaces/velodrome/IVelodromeNonfungiblePositionManager.sol";
 import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
@@ -10,8 +9,7 @@ import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {VelodromeCLTestSetup} from "test/integration/common/velodromeCL/VelodromeCLTestSetup.t.sol";
 
 /// @notice `VelodromeCLAssetGuard` is what lets a vault hold CL positions: it values every tracked
-/// position (staked or not, including emissions still owed) and unwinds the withdrawer's share of
-/// each on exit. Both feed the total fund value that deposits and withdrawals price off.
+/// position and unwinds the withdrawer's share of each on exit. Both feed the total fund value that deposits and withdrawals price off.
 abstract contract VelodromeCLAssetGuardTestSetup is VelodromeCLTestSetup {
   /// @dev Live pool ratios drift against the Chainlink feeds, so equality here is approximate.
   uint256 internal constant VALUATION_TOLERANCE = 0.04e18; // 4%
@@ -75,7 +73,7 @@ abstract contract VelodromeCLAssetGuardTestSetup is VelodromeCLTestSetup {
 
   /* ========== WITHDRAW PROCESSING ========== */
 
-  function test_withdrawing_half_unwinds_half_of_an_unstaked_position() public {
+  function test_withdrawing_half_unwinds_half_of_a_position() public {
     _enableNftPosition();
     uint256 tokenId = _mintAsPool(1);
 
@@ -102,78 +100,39 @@ abstract contract VelodromeCLAssetGuardTestSetup is VelodromeCLTestSetup {
     assertGt(IERC20(cl.token1).balanceOf(investor), token1Before);
   }
 
-  /// @dev A staked position has to be unstaked to be unwound, then staked back so the remaining
-  /// holders keep earning.
-  function test_withdrawing_half_unwinds_half_of_a_staked_position_and_restakes_the_rest() public {
+  function test_withdrawing_unwinds_every_position_together() public {
     _enableNftPosition();
-    uint256 tokenId = _mintAsPool(1);
-    _stake(tokenId);
-    skip(3 days);
+    uint256 firstTokenId = _mintAsPool(1);
+    uint256 secondTokenId = _mintAsPool(2);
 
-    (, , , , , , , uint128 liquidityBefore, , , , ) = nftManager.positions(tokenId);
+    (, , , , , , , uint128 firstBefore, , , , ) = nftManager.positions(firstTokenId);
+    (, , , , , , , uint128 secondBefore, , , , ) = nftManager.positions(secondTokenId);
     uint256 valueBefore = fundManagerLogic.totalFundValue();
 
     _withdrawHalf();
 
-    (, , , , , , , uint128 liquidityAfter, , , , ) = nftManager.positions(tokenId);
-    assertApproxEqRel(uint256(liquidityAfter), uint256(liquidityBefore) / 2, VALUATION_TOLERANCE);
-    assertApproxEqRel(fundManagerLogic.totalFundValue(), valueBefore / 2, VALUATION_TOLERANCE);
-    assertEq(nftManager.ownerOf(tokenId), cl.gauge, "position was not staked back");
-  }
-
-  /// @dev Unstaking claims what the position earned, so the withdrawer takes their share of the
-  /// emissions rather than leaving them to whoever exits last.
-  function test_the_withdrawer_receives_their_share_of_emissions() public {
-    _enableNftPosition();
-    uint256 tokenId = _mintAsPool(1);
-    _stake(tokenId);
-    skip(3 days);
-
-    uint256 owed = IVelodromeCLGauge(cl.gauge).earned(address(fund), tokenId);
-    assertGt(owed, 0, "position earned nothing");
-
-    _withdrawHalf();
-
-    assertApproxEqRel(IERC20(cl.protocolToken).balanceOf(investor), owed / 2, VALUATION_TOLERANCE);
-  }
-
-  function test_withdrawing_unwinds_staked_and_unstaked_positions_together() public {
-    _enableNftPosition();
-    uint256 stakedTokenId = _mintAsPool(1);
-    uint256 unstakedTokenId = _mintAsPool(2);
-    _stake(stakedTokenId);
-    skip(3 days);
-
-    (, , , , , , , uint128 stakedBefore, , , , ) = nftManager.positions(stakedTokenId);
-    (, , , , , , , uint128 unstakedBefore, , , , ) = nftManager.positions(unstakedTokenId);
-    uint256 valueBefore = fundManagerLogic.totalFundValue();
-
-    _withdrawHalf();
-
-    (, , , , , , , uint128 stakedAfter, , , , ) = nftManager.positions(stakedTokenId);
-    (, , , , , , , uint128 unstakedAfter, , , , ) = nftManager.positions(unstakedTokenId);
-    assertApproxEqRel(uint256(stakedAfter), uint256(stakedBefore) / 2, VALUATION_TOLERANCE);
-    assertApproxEqRel(uint256(unstakedAfter), uint256(unstakedBefore) / 2, VALUATION_TOLERANCE);
+    (, , , , , , , uint128 firstAfter, , , , ) = nftManager.positions(firstTokenId);
+    (, , , , , , , uint128 secondAfter, , , , ) = nftManager.positions(secondTokenId);
+    assertApproxEqRel(uint256(firstAfter), uint256(firstBefore) / 2, VALUATION_TOLERANCE);
+    assertApproxEqRel(uint256(secondAfter), uint256(secondBefore) / 2, VALUATION_TOLERANCE);
     assertApproxEqRel(fundManagerLogic.totalFundValue(), valueBefore / 2, VALUATION_TOLERANCE);
   }
 
   /// @dev The last holder out takes everything, so nothing is left stranded in the position.
   function test_a_full_exit_empties_every_position() public {
     _enableNftPosition();
-    uint256 stakedTokenId = _mintAsPool(1);
-    uint256 unstakedTokenId = _mintAsPool(2);
-    _stake(stakedTokenId);
-    skip(3 days);
+    uint256 firstTokenId = _mintAsPool(1);
+    uint256 secondTokenId = _mintAsPool(2);
 
     uint256 shares = fund.balanceOf(investor);
 
     vm.prank(investor);
     fund.withdraw(shares);
 
-    (, , , , , , , uint128 stakedAfter, , , , ) = nftManager.positions(stakedTokenId);
-    (, , , , , , , uint128 unstakedAfter, , , , ) = nftManager.positions(unstakedTokenId);
-    assertEq(uint256(stakedAfter), 0);
-    assertEq(uint256(unstakedAfter), 0);
+    (, , , , , , , uint128 firstAfter, , , , ) = nftManager.positions(firstTokenId);
+    (, , , , , , , uint128 secondAfter, , , , ) = nftManager.positions(secondTokenId);
+    assertEq(uint256(firstAfter), 0);
+    assertEq(uint256(secondAfter), 0);
     assertApproxEqAbs(fundManagerLogic.totalFundValue(), 0, 1e15);
   }
 

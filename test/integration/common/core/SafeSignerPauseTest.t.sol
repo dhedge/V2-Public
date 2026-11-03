@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import {PoolFactory} from "contracts/PoolFactory.sol";
 import {ISafe} from "contracts/interfaces/ISafe.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 import {DeploymentDryRunTest} from "test/integration/utils/foundry/DeploymentDryRunTest.t.sol";
 
 abstract contract SafeSignerPauseTest is DeploymentDryRunTest {

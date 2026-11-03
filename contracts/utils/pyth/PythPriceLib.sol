@@ -2,8 +2,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SignedSafeMath} from "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SignedSafeMath} from "@openzeppelin/v3/contracts/math/SignedSafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import {IPyth} from "../../interfaces/pyth/IPyth.sol";
 import {IGmxPrice} from "../../interfaces/gmx/IGmxPrice.sol";
 import {DhedgeMath} from "../DhedgeMath.sol";

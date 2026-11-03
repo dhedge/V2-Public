@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IAtomicOrderModule} from "../../../interfaces/synthetixV3/IAtomicOrderModule.sol";
 import {ISpotMarketConfigurationModule} from "../../../interfaces/synthetixV3/ISpotMarketConfigurationModule.sol";

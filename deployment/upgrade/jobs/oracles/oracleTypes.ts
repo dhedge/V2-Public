@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { Address } from "../../../types";
 
 export type OracleType =
-  | "DhedgeDeployedAggregator"
   | "ChainlinkAggregator"
   | "DHedgePoolAggregator"
   | "USDPriceAggregator"
@@ -112,7 +111,6 @@ export type IOndoAttestationAggregatorConfig = IAssetConfig<
 export type IMidasPriceAggregatorConfig = IAssetConfig<"MidasPriceAggregator", IMidasPriceAggregatorSpecificConfig>;
 
 export type TAssetConfig =
-  | IAssetConfig<"DhedgeDeployedAggregator", IDhedgeDeployedAggregatorSpecificConfig>
   | IAssetConfig<"ChainlinkAggregator", IChainlinkAggregatorSpecificConfig>
   | IAssetConfig<"DHedgePoolAggregator", ITriggerChange>
   | IUniV3TWAPAggregatorConfig
@@ -136,9 +134,6 @@ export type TAssetConfig =
 
 export interface IChainlinkAggregatorSpecificConfig extends ITriggerChange {
   chainlinkOracleAddress: Address;
-}
-export interface IDhedgeDeployedAggregatorSpecificConfig extends ITriggerChange {
-  alreadyDeployedOracleAddress: Address;
 }
 
 export interface IVelodromeStableLPAggregatorSpecificConfig extends ITriggerChange {
@@ -221,6 +216,9 @@ export interface IERC4626PriceAggregatorSpecificConfig extends ITriggerChange {
 export interface IHyperliquidSpotPriceAggregatorSpecificConfig extends ITriggerChange {
   spotIndex: number;
   usdcUsdFeed: Address;
+  // Perp the spot price is checked against, as its asset ID in the approved perps config (HIP-3: 100000 + dexId * 10000 + index).
+  referencePerpAssetId: number;
+  maxDeviationBps: number;
 }
 
 interface IOndoAttestationAggregatorSpecificConfig extends ITriggerChange {

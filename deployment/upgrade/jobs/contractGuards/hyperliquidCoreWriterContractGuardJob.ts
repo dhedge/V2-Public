@@ -1,8 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IDeployedContractGuard, IJob, IUpgradeConfig, IVersions, IFileNames, IAddresses } from "../../../types";
-import { addOrReplaceGuardInFile } from "../helpers";
+import { addOrReplaceGuardInFile } from "../../../helpers/csv";
 
 export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,
@@ -30,6 +31,12 @@ export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
   // Hyperliquid CoreWriter contract address (fixed system address)
   const hyperliquidCoreWriterAddress = "0x3333333333333333333333333333333333333333";
 
+  // Immutable in the implementation: every order's worst-case concession is charged to this budget.
+  const slippageAccumulator = versions[config.oldTag].contracts.SlippageAccumulator;
+  if (!slippageAccumulator) {
+    throw new Error("SlippageAccumulator not deployed on this network");
+  }
+
   if (config.execute) {
     const existingProxy = versions[config.oldTag].contracts.HyperliquidCoreWriterContractGuardProxy;
 
@@ -38,7 +45,9 @@ export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
       console.log("Will upgrade HyperliquidCoreWriterContractGuard");
 
       const HyperliquidCoreWriterContractGuard = await ethers.getContractFactory("HyperliquidCoreWriterContractGuard");
-      const newImplementation = await upgrades.prepareUpgrade(existingProxy, HyperliquidCoreWriterContractGuard);
+      const newImplementation = await upgrades.prepareUpgrade(existingProxy, HyperliquidCoreWriterContractGuard, {
+        constructorArgs: [slippageAccumulator],
+      });
       console.log("HyperliquidCoreWriterContractGuard new implementation deployed at", newImplementation);
 
       versions[config.newTag].contracts.HyperliquidCoreWriterContractGuard = newImplementation;
@@ -48,7 +57,7 @@ export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
           hre,
           newImplementation,
           "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:HyperliquidCoreWriterContractGuard",
-          [],
+          [slippageAccumulator],
         );
       } catch (error) {
         console.error("May have failed to verify HyperliquidCoreWriterContractGuard:", error);
@@ -71,10 +80,11 @@ export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
       console.log("Will deploy HyperliquidCoreWriterContractGuard as proxy");
 
       const HyperliquidCoreWriterContractGuard = await ethers.getContractFactory("HyperliquidCoreWriterContractGuard");
-      const hyperliquidCoreWriterContractGuardProxy = await upgrades.deployProxy(HyperliquidCoreWriterContractGuard, [
-        admin,
-        maxSlippage,
-      ]);
+      const hyperliquidCoreWriterContractGuardProxy = await upgrades.deployProxy(
+        HyperliquidCoreWriterContractGuard,
+        [admin, maxSlippage],
+        { constructorArgs: [slippageAccumulator] },
+      );
       await hyperliquidCoreWriterContractGuardProxy.deployed();
       const proxyAddress = hyperliquidCoreWriterContractGuardProxy.address;
 
@@ -91,7 +101,7 @@ export const hyperliquidCoreWriterContractGuardJob: IJob<void> = async (
           hre,
           implementationAddress,
           "contracts/guards/contractGuards/hyperliquid/HyperliquidCoreWriterContractGuard.sol:HyperliquidCoreWriterContractGuard",
-          [],
+          [slippageAccumulator],
         );
       } catch (error) {
         console.error("May have failed to verify HyperliquidCoreWriterContractGuard:", error);

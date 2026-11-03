@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "../../interfaces/IHasGuardInfo.sol";
 import "../../interfaces/tracker/IDhedgeNftTrackerStorage.sol";

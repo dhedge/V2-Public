@@ -16,8 +16,6 @@ export interface IContracts {
   DhedgeStakingV2NFTJson?: Address;
   DhedgeStakingV2Proxy?: Address;
   DhedgeStakingV2?: Address;
-  DynamicBondsProxy?: Address;
-  DynamicBonds?: Address;
   DhedgeNftTrackerStorageProxy?: Address;
   DhedgeNftTrackerStorage?: Address;
   RewardDistribution?: Address[];
@@ -59,6 +57,7 @@ export interface IContracts {
   FluidMerkleDistributorContractGuard?: Address;
   KyberSwapRouterV2ContractGuard?: Address;
   LiquifiRewardsContractGuard?: Address;
+  AeroMigrationContractGuard?: Address;
   PoolLimitOrderManagerGuard?: Address;
   GPv2SettlementContractGuard?: Address;
   DytmOfficeContractGuard?: Address;
@@ -69,11 +68,13 @@ export interface IContracts {
   HyperliquidWithdrawalManagerProxy?: Address;
 
   // Asset Guards
-  OpenAssetGuard?: Address;
   ERC20Guard?: Address;
+  NestedVaultAssetGuard?: Address;
   SushiLPAssetGuard?: Address;
   QuickLPAssetGuard?: Address;
   AaveLendingPoolAssetGuardV3?: Address;
+  AaveLendingPoolGuardV3?: Address;
+  AaveLendingPoolGuardV3L2Pool?: Address;
   UniswapV3AssetGuard?: Address;
   VelodromeV2LPAssetGuard?: Address;
   FlatMoneyUNITAssetGuard?: Address;

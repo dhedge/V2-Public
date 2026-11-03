@@ -17,7 +17,7 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {ERC20Guard} from "../ERC20Guard.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
+import {NonDepositAssetGuard} from "../shared/NonDepositAssetGuard.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
 import {IMidasRedemptionVault} from "../../../interfaces/midas/IMidasRedemptionVault.sol";
@@ -54,10 +54,7 @@ import {PoolsWhitelist} from "../../../utils/PoolsWhitelist.sol";
 ///         call time from the mToken's configured redemption vault, so replacing the contract guard
 ///         does not require redeploying this guard. Pool addresses only exist after `createFund`, so
 ///         whitelisted pools enable the Midas assets via `changeAssets` afterwards.
-contract MidasMTokenAssetGuard is ERC20Guard, IAddAssetCheckGuard {
-  // solhint-disable-next-line const-name-snakecase
-  bool public constant override isAddAssetCheckGuard = true;
-
+contract MidasMTokenAssetGuard is ERC20Guard, NonDepositAssetGuard {
   /// @notice The redemption vault paired with each served mToken; its contract guard holds the
   ///         integration's pool whitelist.
   mapping(address => address) public mTokenRedemptionVault;
@@ -77,8 +74,8 @@ contract MidasMTokenAssetGuard is ERC20Guard, IAddAssetCheckGuard {
   }
 
   /// @notice Only whitelisted pools can enable a served mToken, and never as an investor deposit asset.
-  function addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) external view override {
-    require(!_asset.isDeposit, "deposit not supported");
+  function _addAssetCheck(address _poolLogic, IHasSupportedAsset.Asset calldata _asset) internal view override {
+    super._addAssetCheck(_poolLogic, _asset);
 
     address redemptionVault = mTokenRedemptionVault[_asset.asset];
     require(redemptionVault != address(0), "invalid mToken");

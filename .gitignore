@@ -31,3 +31,6 @@ broadcast
 swapdatas-cache/gmx/.live-arbitrum.json
 swapdatas-cache/gmx/.live-arbitrum.lock/
 swapdatas-cache/gmx/.live-arbitrum.*.tmp
+
+# Atomic temporary file for the committed CoW live-canary stamp
+swapdatas-cache/cow-swap/base.json.*.tmp

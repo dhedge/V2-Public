@@ -3,23 +3,20 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
-import {IAddAssetCheckGuard} from "../../../interfaces/guards/IAddAssetCheckGuard.sol";
 import {IPMarket} from "../../../interfaces/pendle/IPMarket.sol";
 import {IStandardizedYield} from "../../../interfaces/pendle/IStandardizedYield.sol";
 import {ERC20Guard} from "../ERC20Guard.sol";
+import {AddAssetCheckGuard} from "../shared/AddAssetCheckGuard.sol";
 
 /// @notice Core features are identical to ERC20Guard, with the addition of onchain storage for
 ///         PT associated data, to workaround unrolling PTs during single asset withdrawals.
 /// @dev Asset type = 37
-contract PendlePTAssetGuard is ERC20Guard, IAddAssetCheckGuard {
+contract PendlePTAssetGuard is ERC20Guard, AddAssetCheckGuard {
   struct PTAssociatedData {
     address market;
     address yieldToken;
     address yt;
   }
-
-  // solhint-disable-next-line const-name-snakecase
-  bool public constant override isAddAssetCheckGuard = true;
 
   mapping(address => PTAssociatedData) public ptAssociatedData;
 
@@ -37,7 +34,7 @@ contract PendlePTAssetGuard is ERC20Guard, IAddAssetCheckGuard {
     }
   }
 
-  function addAssetCheck(address, IHasSupportedAsset.Asset calldata _asset) external view override {
+  function _addAssetCheck(address, IHasSupportedAsset.Asset calldata _asset) internal view override {
     PTAssociatedData memory ptData = ptAssociatedData[_asset.asset];
 
     require(ptData.market != address(0), "unknown PT");

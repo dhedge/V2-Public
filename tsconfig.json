@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "lib": ["ES2020", "DOM"],
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "node20",
+    "types": ["node"],
     "strict": true,
-    "target": "ES2018",
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "noImplicitAny": false
-  }
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["hardhat.config.ts", "deployment", "scripts", "test", "types/hardhat.d.ts"]
 }

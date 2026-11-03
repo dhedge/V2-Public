@@ -17,8 +17,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/SafeCast.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/v3/contracts/utils/SafeCast.sol";
 import {ISynthetixV3PerpsMarketContractGuard} from "../../../interfaces/synthetixV3/ISynthetixV3PerpsMarketContractGuard.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
 import {IHasGuardInfo} from "../../../interfaces/IHasGuardInfo.sol";

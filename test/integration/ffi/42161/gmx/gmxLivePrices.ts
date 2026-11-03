@@ -2,13 +2,14 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import dotenv from "dotenv";
 import { ethers } from "ethers";
 
-dotenv.config({ quiet: true });
+if (fs.existsSync(".env")) process.loadEnvFile(".env");
 
 const PRICE_API_URL = "https://arbitrum-api.gmxinfra.io/signed_prices/latest";
-const LIVE_CACHE_TTL_MS = 30 * 1_000;
+// A single live snapshot must cover every setup call in the GMX FFI suite so
+// one repin run uses one fork block and publishes the fixture only once.
+const LIVE_CACHE_TTL_MS = 30 * 60 * 1_000;
 const LOCK_STALE_MS = 60 * 1_000;
 const FORK_LEAD_SECONDS = 30;
 const REPORT_COUNT = 3;
@@ -224,8 +225,19 @@ function releaseStaleLock(lockDirectory: string): void {
   }
 }
 
+function writeCacheAtomically(targetFile: string, contents: string, label: string): void {
+  const temporaryFile = path.join(path.dirname(targetFile), `.live-arbitrum.${label}.${process.pid}.${Date.now()}.tmp`);
+  try {
+    fs.writeFileSync(temporaryFile, contents, { flag: "wx" });
+    fs.renameSync(temporaryFile, targetFile);
+  } finally {
+    fs.rmSync(temporaryFile, { force: true });
+  }
+}
+
 async function loadLivePrices(cacheDirectory: string, rpcUrl: string): Promise<PriceCache> {
   const cacheFile = path.join(cacheDirectory, ".live-arbitrum.json");
+  const fixtureFile = path.join(cacheDirectory, "arbitrum.json");
   const lockDirectory = path.join(cacheDirectory, ".live-arbitrum.lock");
   fs.mkdirSync(cacheDirectory, { recursive: true });
 
@@ -251,9 +263,11 @@ async function loadLivePrices(cacheDirectory: string, rpcUrl: string): Promise<P
     if (sharedLivePrices) return sharedLivePrices;
 
     const fresh = await fetchFreshPrices(rpcUrl);
-    const temporaryFile = path.join(cacheDirectory, `.live-arbitrum.${process.pid}.${Date.now()}.tmp`);
-    fs.writeFileSync(temporaryFile, `${JSON.stringify(fresh)}\n`, { flag: "wx" });
-    fs.renameSync(temporaryFile, cacheFile);
+    // Publish the tracked fixture first and the runtime cache last. A process
+    // observing the new runtime cache can therefore assume fixture promotion
+    // completed successfully while the lock owner held exclusive access.
+    writeCacheAtomically(fixtureFile, `${JSON.stringify(fresh, null, 2)}\n`, "fixture");
+    writeCacheAtomically(cacheFile, `${JSON.stringify(fresh)}\n`, "runtime");
     return fresh;
   } finally {
     fs.rmdirSync(lockDirectory);

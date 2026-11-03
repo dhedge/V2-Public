@@ -17,7 +17,7 @@
 
 pragma solidity 0.7.6;
 
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import {IManaged} from "./interfaces/IManaged.sol";
 

@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {FluidDexTWAPAggregator} from "contracts/priceAggregators/FluidDexTWAPAggregator.sol";
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
-import {IFluidDexFactory} from "contracts/interfaces/fluid/IFluidDexFactory.sol";
+import {IFluidDexFactory} from "test/integration/common/fluid/IFluidDexFactory.sol";
 import {IFluidDexT1} from "contracts/interfaces/fluid/IFluidDexT1.sol";
 
 /// @dev IMPORTANT: The Fluid DEX oracle requires activation and historical price data from swaps.

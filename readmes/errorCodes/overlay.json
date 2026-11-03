@@ -317,6 +317,10 @@
       "description": "Core dex IDs are locked and cannot change",
       "action": "Open a team support message."
     },
+    "cl asset not enabled": {
+      "description": "Liquidity position asset not enabled in the vault",
+      "action": "Add the corresponding liquidity position asset to the vault's assets."
+    },
     "collateral not enabled": {
       "description": "Collateral asset not enabled in the vault",
       "action": "Add the collateral asset to the vault's assets."
@@ -669,14 +673,6 @@
       "description": "Bridge output is over 1% below the input",
       "action": "Retry when bridge fees are lower."
     },
-    "pancake CL asset not enabled": {
-      "description": "PancakeSwap CL asset not enabled in vault",
-      "action": "Add the Pancake CL asset to the vault's assets."
-    },
-    "pancake cl asset not enabled": {
-      "description": "PancakeSwap CL asset not enabled in vault",
-      "action": "Add the Pancake CL asset to the vault's assets."
-    },
     "permit not supported": {
       "description": "Permit signatures are not supported",
       "action": "Swap without a permit."
@@ -748,10 +744,6 @@
     "unapproved dex id": {
       "description": "Dex ID is not approved",
       "action": "Use an approved dex ID."
-    },
-    "uniswap asset not enabled": {
-      "description": "Uniswap V3 asset not enabled in the vault",
-      "action": "Add the Uniswap position asset to the vault."
     },
     "uniV2 pool invalid": {
       "description": "Uniswap V2 pool does not match token pair",
@@ -869,10 +861,6 @@
       "description": "User must be the vault address",
       "action": "Use the vault address as the user."
     },
-    "velodrome cl asset not enabled": {
-      "description": "Velodrome CL asset not enabled in the vault",
-      "action": "Add the Velodrome CL asset to the vault."
-    },
     "WETH unwrap not supported": {
       "description": "WETH unwrapping is not supported",
       "action": "Disable WETH unwrap for the swap route."
@@ -905,9 +893,6 @@
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "1970 and later only": {
-      "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "account value !0": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "aggregator address cannot be 0": {
@@ -1149,16 +1134,10 @@
     "Invalid exponent": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
-    "Invalid extContract address": {
-      "action": "TODO: fill in a user-facing description/action for this error."
-    },
     "invalid fee receiver": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "invalid flashloan origin": {
-      "action": "TODO: fill in a user-facing description/action for this error."
-    },
-    "Invalid guardAddress": {
       "action": "TODO: fill in a user-facing description/action for this error."
     },
     "invalid hour": {
@@ -1776,10 +1755,6 @@
       "description": "Spot pair is not quoted in USDC",
       "action": "Trade this asset on its USDC-quoted Hyperliquid pair."
     },
-    "USDC required for HL": {
-      "description": "USDC cannot be removed while the vault uses Hyperliquid",
-      "action": "Remove the Hyperliquid position asset first, then remove USDC."
-    },
     "eps skip market not zero": {
       "description": "Pendle limit order sets epsSkipMarket, which could skip the market leg.",
       "action": "Set epsSkipMarket to 0 so any remainder routes through the market."
@@ -1815,6 +1790,18 @@
     "unsupported tif": {
       "description": "Order time-in-force is not supported",
       "action": "Use a GTC, IOC or ALO order."
+    },
+    "cannot remove HL core asset": {
+      "description": "The Hyperliquid position asset and USDC cannot be removed from the vault",
+      "action": "Keep the asset enabled; it is required to value and pay out the vault's Hyperliquid holdings."
+    },
+    "spot price deviates from oracle": {
+      "description": "The Hyperliquid spot price of this token is too far from the oracle price of the same asset, so it cannot be priced.",
+      "action": "Wait for the spot price to return near the oracle price and retry."
+    },
+    "invalid max deviation": {
+      "description": "The maximum spot price deviation must be above zero and below 100%.",
+      "action": "Deploy the aggregator with a deviation between 1 and 9999 basis points."
     }
   },
   "selectorErrors": {
@@ -2159,6 +2146,10 @@
     "AmountsAfterPermit2TransferMismatch(address,uint256,uint256)": {
       "description": "Permit2 transferred a different token amount than the swap specified",
       "action": "Make the Permit2 signature cover exactly the source token amounts in the swap data."
+    },
+    "PrecompileHelper__MarkPxPrecompileFailed(uint32)": {
+      "description": "The Hyperliquid mark price precompile did not return a price for this perp.",
+      "action": "Check that the perp index exists on HyperCore and retry."
     }
   }
 }

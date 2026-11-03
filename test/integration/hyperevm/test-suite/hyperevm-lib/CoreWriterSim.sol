@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.6 <0.9.0;
+pragma solidity 0.8.28;
 
-import {Heap} from "@openzeppelin/v5/contracts/utils/structs/Heap.sol";
-import {Address} from "@openzeppelin/v5/contracts/utils/Address.sol";
+import {Heap} from "@openzeppelin/contracts/utils/structs/Heap.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {HyperCore, CoreExecution} from "./HyperCore.sol";
 
 contract CoreWriterSim {
@@ -19,11 +19,11 @@ contract CoreWriterSim {
     uint256 value;
   }
 
-  mapping(uint256 id => Action) _actions;
+  mapping(uint256 id => Action) internal _actions;
 
   event RawAction(address indexed user, bytes data);
 
-  HyperCore constant _hyperCore = HyperCore(payable(0x9999999999999999999999999999999999999999));
+  HyperCore internal constant _hyperCore = HyperCore(payable(0x9999999999999999999999999999999999999999));
 
   /////// testing config
   /////////////////////////

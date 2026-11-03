@@ -22,21 +22,7 @@ contract PoolChangeAssetsTest is PoolUnitTestSetup {
     supportedAssets[0] = IHasSupportedAsset.Asset({asset: address(usdc), isDeposit: true});
     supportedAssets[1] = IHasSupportedAsset.Asset({asset: address(weth), isDeposit: false});
 
-    vm.prank(manager);
-    testPool = PoolLogic(
-      poolFactoryProxy.createFund({
-        _privatePool: false,
-        _manager: manager,
-        _managerName: "Manager",
-        _fundName: "ChangeAssetsTest",
-        _fundSymbol: "CAT",
-        _performanceFeeNumerator: 0,
-        _managerFeeNumerator: 0,
-        _entryFeeNumerator: 0,
-        _exitFeeNum: 0,
-        _supportedAssets: supportedAssets
-      })
-    );
+    testPool = _createFund(supportedAssets);
     testPoolManagerLogic = PoolManagerLogic(testPool.poolManagerLogic());
   }
 

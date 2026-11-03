@@ -1,7 +1,8 @@
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
 
 const WITHDRAWAL_DELAY = 3 * 24 * 60 * 60; // 3 days in seconds
@@ -82,7 +83,7 @@ const deployWithdrawalGuardian = async (
       try {
         withdrawalGuardianImplementationAddress = await getImplementationAddress(provider, withdrawalGuardianProxy);
         break;
-      } catch (e) {
+      } catch {
         console.log(`Attempt ${i + 1}/5: Waiting for proxy to be indexed...`);
         await new Promise((resolve) => setTimeout(resolve, 5000));
       }

@@ -8,6 +8,7 @@ import {AcrossContractGuardTestSetup} from "test/integration/common/across/Acros
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @title Minimal BackboneSetup-based HyperEVM fork setup (mirrors BaseSetup/EthereumSetup).
 /// @dev Defined inline here rather than reusing `chains/HyperEVMSetup.t.sol`: that one is the heavier
@@ -55,14 +56,13 @@ abstract contract HyperEVMBackboneSetup is BackboneSetup {
 }
 
 contract AcrossContractGuardTestHyperEVM is AcrossContractGuardTestSetup, HyperEVMBackboneSetup {
-  uint256 private acrossTestForkBlockNumber = 39000000;
   address private acrossSpokePool = 0x35E63eA3eb0fb7A3bc543C71FB66412e1F6B0E04; // Across SpokePool on HyperEVM
   address private approvedDestToken = EthereumConfig.USDC; // USDC on Ethereum
   uint256 private approvedDestChainId = EthereumConfig.CHAIN_ID; // 1
 
   constructor()
     AcrossContractGuardTestSetup(acrossSpokePool, approvedDestToken, approvedDestChainId)
-    HyperEVMBackboneSetup(acrossTestForkBlockNumber)
+    HyperEVMBackboneSetup(ForkBlocks.HYPEREVM)
   {}
 
   function setUp() public override(AcrossContractGuardTestSetup, HyperEVMBackboneSetup) {

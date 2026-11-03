@@ -1,4 +1,5 @@
-import dotenv from "dotenv";
+import fs from "node:fs";
+
 import "@nomicfoundation/hardhat-foundry";
 import "@openzeppelin/hardhat-upgrades";
 import "@nomicfoundation/hardhat-verify";
@@ -8,14 +9,11 @@ import "@typechain/hardhat";
 
 import { ChainId } from "./deployment/chainIds";
 import "./deployment/upgrade/upgrade";
-import "./deployment/checks/checkConfig";
-import "./deployment/compileOne";
-import "./deployment/polygon/dynamicBonds";
 import "./deployment/polygon/privateTokenSwap";
 import "./deployment/hyperevm/whitelistSpotAsset";
 import "./deployment/hyperevm/whitelistPerpAssets";
 
-dotenv.config();
+if (fs.existsSync(".env")) process.loadEnvFile(".env");
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -122,7 +120,7 @@ export default {
       "TypedStructuredDataValidator",
       "EasyLimitBuyManager",
     ],
-    except: ["contracts/interfaces", "contracts/test", "contracts/v2.4.1", "contracts/stakingv2/interfaces"],
+    except: ["contracts/interfaces", "contracts/test", "contracts/stakingv2/interfaces"],
     spacing: 2,
   },
   etherscan: {
@@ -150,16 +148,4 @@ export default {
     outDir: "./types",
     target: "ethers-v5",
   },
-};
-
-// Hack console to just print bigNumbers as normal numbers not as an object
-const log = console.log.bind(console);
-console.log = (...args) => {
-  args = args.map((arg) => {
-    if (arg && arg._isBigNumber) {
-      return arg.toString();
-    }
-    return arg;
-  });
-  log(...args);
 };

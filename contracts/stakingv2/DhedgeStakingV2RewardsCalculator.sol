@@ -31,7 +31,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import "./interfaces/IDhedgeStakingV2.sol";
 
 pragma solidity 0.7.6;

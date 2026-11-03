@@ -10,11 +10,11 @@ const BASE_SYSTEM_ADDRESS = BigInt("0x2000000000000000000000000000000000000000")
 const HYPE_SYSTEM_ADDRESS = "0x2222222222222222222222222222222222222222";
 const MAINNET_HYPE_TOKEN_INDEX = 150;
 const USDC_USD_PRICE_FEED = "0xA0Adc43ce7AfE3EE7d7eac3C994E178D0620223B"; // Chainlink USDC/USD price feed
+const DEFAULT_MAX_DEVIATION_BPS = 100;
 
 // Types for Hyperliquid API responses
 interface EvmContract {
   address: string;
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   evm_extra_wei_decimals: number;
 }
 
@@ -62,6 +62,26 @@ function getSystemAddress(tokenIndex: number): string {
 
   const systemAddress = BASE_SYSTEM_ADDRESS + BigInt(tokenIndex);
   return "0x" + systemAddress.toString(16).padStart(40, "0");
+}
+
+/**
+ * Resolve the asset ID of the perp the spot price is checked against from the approved perps config.
+ */
+function getReferencePerpAssetId(perpName: string): number {
+  const approvedPerpsPath = hyperevmProdFileNames.approvedPerpsFileName;
+  if (!approvedPerpsPath) {
+    throw new Error("No approvedPerpsFileName configured for hyperevm");
+  }
+  const approvedPerps: { perpName: string; assetId: number }[] = JSON.parse(
+    fs.readFileSync(approvedPerpsPath, "utf-8"),
+  );
+  const perp = approvedPerps.find((p) => p.perpName === perpName);
+  if (!perp) {
+    throw new Error(
+      `Reference perp "${perpName}" not found in ${approvedPerpsPath}; whitelist it with whitelistPerpAssets first`,
+    );
+  }
+  return perp.assetId;
 }
 
 /**
@@ -123,8 +143,21 @@ function findSpotAssetByTicker(
  */
 task("whitelistSpotAsset", "Resolve Hyperliquid spot asset info and add it to the assets config for assetsJob")
   .addParam("ticker", "The ticker symbol of the spot asset (e.g., PURR, HYPE)", undefined, types.string)
+  .addParam(
+    "referenceperp",
+    "Perp on the same asset whose oracle price the spot price is checked against (e.g., BTC for UBTC, xyz:GOLD for XAUT0)",
+    undefined,
+    types.string,
+  )
+  .addOptionalParam(
+    "maxdeviationbps",
+    "Maximum distance of the spot price from the reference oracle price, in basis points",
+    DEFAULT_MAX_DEVIATION_BPS,
+    types.int,
+  )
   .setAction(async (taskArgs) => {
-    const { ticker } = taskArgs;
+    const { ticker, referenceperp, maxdeviationbps } = taskArgs;
+    const referencePerpAssetId = getReferencePerpAssetId(referenceperp);
 
     console.log(`\n🚀 Whitelisting Hyperliquid Spot Asset: ${ticker}\n`);
 
@@ -184,6 +217,8 @@ task("whitelistSpotAsset", "Resolve Hyperliquid spot asset info and add it to th
       specificOracleConfig: {
         spotIndex: spotIndex,
         usdcUsdFeed: USDC_USD_PRICE_FEED,
+        referencePerpAssetId,
+        maxDeviationBps: maxdeviationbps,
       },
       oracleType: "HyperliquidSpotPriceAggregator",
     };
@@ -198,6 +233,8 @@ task("whitelistSpotAsset", "Resolve Hyperliquid spot asset info and add it to th
     console.log(`   Asset Address: ${assetAddress}`);
     console.log(`   Asset Type: ${ASSET_TYPE_HYPERLIQUID_SPOT} (Hyperliquid ERC20 Spot Linked Asset)`);
     console.log(`   USDC/USD Feed: ${USDC_USD_PRICE_FEED}`);
+    console.log(`   Reference Perp: ${referenceperp} (Asset ID: ${referencePerpAssetId})`);
+    console.log(`   Max Deviation: ${maxdeviationbps} bps`);
     console.log(`   EVM Contract Linked: ${evmContractAddress ? "Yes" : "No (using system address)"}`);
     console.log(`${"=".repeat(60)}\n`);
 

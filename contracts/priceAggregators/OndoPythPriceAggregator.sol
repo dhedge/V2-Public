@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.28;
 
-import {SafeCast} from "@openzeppelin/v5/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {ICommonErrors} from "../interfaces/ICommonErrors.sol";

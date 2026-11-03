@@ -3,7 +3,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 import {IERC20Extended} from "contracts/interfaces/IERC20Extended.sol";
 
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
@@ -55,6 +55,12 @@ abstract contract GmxTestScenarios is GmxTestSetup {
     uint256 timeKey;
     address token;
     uint256 amount;
+  }
+
+  struct ClaimSetup {
+    uint256 longSizeUsd;
+    uint256 longCollateralAmount;
+    uint256 impactSizeUsd;
   }
 
   function test_perps() public {
@@ -821,9 +827,17 @@ abstract contract GmxTestScenarios is GmxTestSetup {
   }
 
   function test_claim() public {
+    ClaimSetup memory setup = _getClaimSetup();
+    if (setup.longSizeUsd < marketConfig.sizeDeltaUsd) {
+      vm.skip(true, "GMX claim setup has less than the minimum long capacity");
+    }
+    if (setup.impactSizeUsd <= setup.longSizeUsd) {
+      vm.skip(true, "GMX claim setup has insufficient short capacity");
+    }
+
     _fundClaimPool();
     GmxTimeKeyViewer viewer = new GmxTimeKeyViewer();
-    ClaimCondition memory condition = _prepareClaimCondition(viewer);
+    ClaimCondition memory condition = _prepareClaimCondition(viewer, setup);
     uint256 claimSnapshot = _snapshot();
 
     _claimAndAssert(viewer, condition, 1, 0, 0, condition.amount);
@@ -854,7 +868,10 @@ abstract contract GmxTestScenarios is GmxTestSetup {
     }
   }
 
-  function _prepareClaimCondition(GmxTimeKeyViewer viewer) internal returns (ClaimCondition memory condition) {
+  function _prepareClaimCondition(
+    GmxTimeKeyViewer viewer,
+    ClaimSetup memory setup
+  ) internal returns (ClaimCondition memory condition) {
     bytes32 maxNegativePositionImpactFactorKey = keccak256(
       abi.encode(_hashString("MAX_POSITION_IMPACT_FACTOR"), marketConfig.market, false)
     );
@@ -862,21 +879,26 @@ abstract contract GmxTestScenarios is GmxTestSetup {
     GMX_DATA_STORE.setUint(maxNegativePositionImpactFactorKey, 1);
 
     _assertNoClaimableCollateral(viewer);
-    _openClaimPoolLong();
-    _openClaimImpactShort();
-    uint256 collateralReturned = _closeClaimPoolLong();
-    return _resolveClaimCondition(viewer, collateralReturned);
+    _openClaimPoolLong(setup);
+    _openClaimImpactShort(setup);
+    uint256 collateralReturned = _closeClaimPoolLong(setup);
+    return _resolveClaimCondition(viewer, setup.longCollateralAmount, collateralReturned);
   }
 
-  function _openClaimPoolLong() internal {
+  function _openClaimPoolLong(ClaimSetup memory setup) internal {
     uint256 poolCollateralBefore = IERC20(ArbitrumConfig.USDC).balanceOf(address(testPool));
     OpenOrderParams memory params = _emptyOrderParams();
     params.hasInitialCollateralDeltaAmount = true;
-    params.initialCollateralDeltaAmount = USDC_TEST_AMOUNT * 2;
+    params.initialCollateralDeltaAmount = setup.longCollateralAmount;
     params.hasSizeDeltaUsd = true;
-    params.sizeDeltaUsd = marketConfig.sizeDeltaUsd * 8;
+    params.sizeDeltaUsd = setup.longSizeUsd;
     _openOrder(params);
     _executeOrder();
+    assertEq(
+      _positionSizeInUsd(address(testPool), ArbitrumConfig.USDC, true),
+      setup.longSizeUsd,
+      "claim setup long order was not executed"
+    );
     assertLt(
       IERC20(ArbitrumConfig.USDC).balanceOf(address(testPool)),
       poolCollateralBefore,
@@ -884,17 +906,16 @@ abstract contract GmxTestScenarios is GmxTestSetup {
     );
   }
 
-  function _openClaimImpactShort() internal {
+  function _openClaimImpactShort(ClaimSetup memory setup) internal {
     address trader = makeAddr("GMX claim impact trader");
-    uint256 impactSizeUsd = _getClaimImpactSizeUsd();
     OpenOrderParams memory params = _emptyOrderParams();
     params.receiver = trader;
     params.useZeroCallback = true;
     params.isShort = true;
     params.hasInitialCollateralDeltaAmount = true;
-    params.initialCollateralDeltaAmount = impactSizeUsd / 1e24;
+    params.initialCollateralDeltaAmount = _usdToTokenAmount(setup.impactSizeUsd, ArbitrumConfig.USDC);
     params.hasSizeDeltaUsd = true;
-    params.sizeDeltaUsd = impactSizeUsd;
+    params.sizeDeltaUsd = setup.impactSizeUsd;
     params.hasAcceptablePrice = true;
     params.acceptablePrice = 0;
     params.hasCallbackGasLimit = true;
@@ -903,78 +924,133 @@ abstract contract GmxTestScenarios is GmxTestSetup {
     uint256 traderCollateralBeforeExecution = IERC20(ArbitrumConfig.USDC).balanceOf(trader);
     _executeOrderFor(trader);
     assertEq(
+      _positionSizeInUsd(trader, ArbitrumConfig.USDC, false),
+      setup.impactSizeUsd,
+      "claim setup impact order was not executed"
+    );
+    assertEq(
       IERC20(ArbitrumConfig.USDC).balanceOf(trader),
       traderCollateralBeforeExecution,
       "impact trade returned collateral"
     );
   }
 
-  function _getClaimImpactSizeUsd() internal view returns (uint256) {
-    // The old Hardhat fixture always requested a 20,000x short. That regularly
-    // gets cancelled as live market capacity changes. Preserve that upper bound,
-    // but keep a 10% buffer below every GMX limit enforced for short increases.
-    uint256 configuredSizeUsd = marketConfig.sizeDeltaUsd * marketConfig.claimImpactMultiplier;
-    uint256 currentShortOpenInterest = GMX_DATA_STORE.getUint(
-      keccak256(abi.encode(_hashString("OPEN_INTEREST"), marketConfig.market, marketConfig.longToken, false))
-    );
+  function _getClaimSetup() internal view returns (ClaimSetup memory setup) {
+    uint256 maxLongSizeUsd = marketConfig.sizeDeltaUsd * 8;
+    uint256 safeLongCapacityUsd = _getSafeIncreaseCapacityUsd(true, 4);
+    setup.longSizeUsd = maxLongSizeUsd < safeLongCapacityUsd ? maxLongSizeUsd : safeLongCapacityUsd;
+    if (setup.longSizeUsd < marketConfig.sizeDeltaUsd) return setup;
 
-    if (marketConfig.shortToken != marketConfig.longToken) {
-      currentShortOpenInterest += GMX_DATA_STORE.getUint(
-        keccak256(abi.encode(_hashString("OPEN_INTEREST"), marketConfig.market, marketConfig.shortToken, false))
-      );
-    }
+    setup.longCollateralAmount = _usdToTokenAmount(setup.longSizeUsd / 4, ArbitrumConfig.USDC);
 
-    uint256 maxShortOpenInterest = GMX_DATA_STORE.getUint(
-      keccak256(abi.encode(_hashString("MAX_OPEN_INTEREST"), marketConfig.market, false))
-    );
-    require(maxShortOpenInterest > currentShortOpenInterest, "claim setup has no short open interest capacity");
-    uint256 availableOpenInterestUsd = maxShortOpenInterest - currentShortOpenInterest;
-
-    uint256 shortPoolAmount = GMX_DATA_STORE.getUint(
-      keccak256(abi.encode(_hashString("POOL_AMOUNT"), marketConfig.market, marketConfig.shortToken))
-    );
-    uint256 shortReserveFactor = GMX_DATA_STORE.getUint(
-      keccak256(abi.encode(_hashString("RESERVE_FACTOR"), marketConfig.market, false))
-    );
-    uint256 shortPoolUsd = shortPoolAmount * _getLiveTokenPrice(marketConfig.shortToken).min;
-    uint256 maxReservedUsd = (shortPoolUsd * shortReserveFactor) / 1e30;
-    require(maxReservedUsd > currentShortOpenInterest, "claim setup has no short reserve capacity");
-    uint256 availableReserveUsd = maxReservedUsd - currentShortOpenInterest;
-
-    uint256 openInterestReserveFactor = GMX_DATA_STORE.getUint(
-      keccak256(abi.encode(_hashString("OPEN_INTEREST_RESERVE_FACTOR"), marketConfig.market, false))
-    );
-    uint256 maxOpenInterestReservedUsd = (shortPoolUsd * openInterestReserveFactor) / 1e30;
-    require(
-      maxOpenInterestReservedUsd > currentShortOpenInterest,
-      "claim setup has no short open interest reserve capacity"
-    );
-    uint256 availableOpenInterestReserveUsd = maxOpenInterestReservedUsd - currentShortOpenInterest;
-
-    uint256 availableSizeUsd = availableOpenInterestUsd < availableReserveUsd
-      ? availableOpenInterestUsd
-      : availableReserveUsd;
-    if (availableOpenInterestReserveUsd < availableSizeUsd) {
-      availableSizeUsd = availableOpenInterestReserveUsd;
-    }
-    uint256 safeAvailableSizeUsd = (availableSizeUsd * 9) / 10;
-    uint256 impactSizeUsd = configuredSizeUsd < safeAvailableSizeUsd ? configuredSizeUsd : safeAvailableSizeUsd;
-    require(impactSizeUsd > marketConfig.sizeDeltaUsd * 8, "claim setup short cannot outweigh pool long");
-    return impactSizeUsd;
+    uint256 configuredImpactSizeUsd = marketConfig.sizeDeltaUsd * marketConfig.claimImpactMultiplier;
+    uint256 safeShortCapacityUsd = _getSafeIncreaseCapacityUsd(false, 1);
+    setup.impactSizeUsd = configuredImpactSizeUsd < safeShortCapacityUsd
+      ? configuredImpactSizeUsd
+      : safeShortCapacityUsd;
   }
 
-  function _closeClaimPoolLong() internal returns (uint256 collateralReturned) {
-    uint256 collateralDecreaseAmount = USDC_TEST_AMOUNT * 2;
+  function _getSafeIncreaseCapacityUsd(bool isLong, uint256 collateralLeverage) internal view returns (uint256) {
+    uint256 currentOpenInterestUsd = _getMarketOpenInterest(isLong, false);
+    uint256 maxOpenInterestUsd = GMX_DATA_STORE.getUint(
+      keccak256(abi.encode(_hashString("MAX_OPEN_INTEREST"), marketConfig.market, isLong))
+    );
+    if (maxOpenInterestUsd <= currentOpenInterestUsd) return 0;
+    uint256 availableSizeUsd = maxOpenInterestUsd - currentOpenInterestUsd;
+
+    uint256 currentReservedUsd = isLong
+      ? _getMarketOpenInterest(isLong, true) * _getLiveTokenPrice(marketConfig.indexToken).max
+      : currentOpenInterestUsd;
+    uint256 poolDivisor = marketConfig.longToken == marketConfig.shortToken ? 2 : 1;
+    address poolToken = isLong ? marketConfig.longToken : marketConfig.shortToken;
+    uint256 poolAmount = GMX_DATA_STORE.getUint(
+      keccak256(abi.encode(_hashString("POOL_AMOUNT"), marketConfig.market, poolToken))
+    ) / poolDivisor;
+    uint256 poolUsd = poolAmount * _getLiveTokenPrice(poolToken).min;
+
+    availableSizeUsd = _capByReserveFactor(availableSizeUsd, currentReservedUsd, poolUsd, "RESERVE_FACTOR", isLong);
+    if (availableSizeUsd == 0) return 0;
+    availableSizeUsd = _capByReserveFactor(
+      availableSizeUsd,
+      currentReservedUsd,
+      poolUsd,
+      "OPEN_INTEREST_RESERVE_FACTOR",
+      isLong
+    );
+    if (availableSizeUsd == 0) return 0;
+
+    availableSizeUsd = _capByCollateralSum(availableSizeUsd, isLong, collateralLeverage);
+    return (availableSizeUsd * 9) / 10;
+  }
+
+  function _getMarketOpenInterest(bool isLong, bool inTokens) internal view returns (uint256 openInterest) {
+    string memory key = inTokens ? "OPEN_INTEREST_IN_TOKENS" : "OPEN_INTEREST";
+    uint256 poolDivisor = marketConfig.longToken == marketConfig.shortToken ? 2 : 1;
+    openInterest =
+      GMX_DATA_STORE.getUint(
+        keccak256(abi.encode(_hashString(key), marketConfig.market, marketConfig.longToken, isLong))
+      ) /
+      poolDivisor;
+    openInterest +=
+      GMX_DATA_STORE.getUint(
+        keccak256(abi.encode(_hashString(key), marketConfig.market, marketConfig.shortToken, isLong))
+      ) /
+      poolDivisor;
+  }
+
+  function _capByReserveFactor(
+    uint256 availableSizeUsd,
+    uint256 currentReservedUsd,
+    uint256 poolUsd,
+    string memory factorName,
+    bool isLong
+  ) internal view returns (uint256) {
+    uint256 reserveFactor = GMX_DATA_STORE.getUint(
+      keccak256(abi.encode(_hashString(factorName), marketConfig.market, isLong))
+    );
+    uint256 maxReservedUsd = (poolUsd * reserveFactor) / 1e30;
+    if (maxReservedUsd <= currentReservedUsd) return 0;
+    uint256 availableReserveUsd = maxReservedUsd - currentReservedUsd;
+    return availableSizeUsd < availableReserveUsd ? availableSizeUsd : availableReserveUsd;
+  }
+
+  function _capByCollateralSum(
+    uint256 availableSizeUsd,
+    bool isLong,
+    uint256 collateralLeverage
+  ) internal view returns (uint256) {
+    uint256 currentCollateralSum = GMX_DATA_STORE.getUint(
+      keccak256(abi.encode(_hashString("COLLATERAL_SUM"), marketConfig.market, ArbitrumConfig.USDC, isLong))
+    );
+    uint256 maxCollateralSum = GMX_DATA_STORE.getUint(
+      keccak256(abi.encode(_hashString("MAX_COLLATERAL_SUM"), marketConfig.market, ArbitrumConfig.USDC, isLong))
+    );
+    if (maxCollateralSum <= currentCollateralSum) return 0;
+
+    uint256 availableCollateralAmount = maxCollateralSum - currentCollateralSum;
+    uint256 requiredCollateralAmount = _usdToTokenAmount(availableSizeUsd / collateralLeverage, ArbitrumConfig.USDC);
+    if (availableCollateralAmount >= requiredCollateralAmount) return availableSizeUsd;
+
+    return availableCollateralAmount * _getLiveTokenPrice(ArbitrumConfig.USDC).min * collateralLeverage;
+  }
+
+  function _usdToTokenAmount(uint256 amountUsd, address token) internal view returns (uint256) {
+    uint256 tokenPrice = _getLiveTokenPrice(token).min;
+    return amountUsd == 0 ? 0 : ((amountUsd - 1) / tokenPrice) + 1;
+  }
+
+  function _closeClaimPoolLong(ClaimSetup memory setup) internal returns (uint256 collateralReturned) {
     OpenOrderParams memory params = _emptyOrderParams();
     params.decreasePosition = true;
     params.hasInitialCollateralDeltaAmount = true;
-    params.initialCollateralDeltaAmount = collateralDecreaseAmount;
+    params.initialCollateralDeltaAmount = setup.longCollateralAmount;
     params.hasSizeDeltaUsd = true;
-    params.sizeDeltaUsd = marketConfig.sizeDeltaUsd * 8;
+    params.sizeDeltaUsd = setup.longSizeUsd;
     uint256 fundValueBeforeDecrease = testPoolManagerLogic.totalFundValue();
     uint256 collateralBeforeDecrease = IERC20(ArbitrumConfig.USDC).balanceOf(address(testPool));
     _openOrder(params);
     _executeOrder();
+    assertEq(_positionSizeInUsd(address(testPool), ArbitrumConfig.USDC, true), 0, "claim setup long was not closed");
     collateralReturned = IERC20(ArbitrumConfig.USDC).balanceOf(address(testPool)) - collateralBeforeDecrease;
 
     assertGt(collateralReturned, 0, "claim setup decrease returned no collateral");
@@ -988,9 +1064,9 @@ abstract contract GmxTestScenarios is GmxTestSetup {
 
   function _resolveClaimCondition(
     GmxTimeKeyViewer viewer,
+    uint256 collateralDecreaseAmount,
     uint256 collateralReturned
   ) internal view returns (ClaimCondition memory condition) {
-    uint256 collateralDecreaseAmount = USDC_TEST_AMOUNT * 2;
     uint256 longClaimAmount = _totalClaimable(viewer, marketConfig.longToken);
     uint256 shortClaimAmount = _totalClaimable(viewer, marketConfig.shortToken);
     uint256[] memory longTimeKeys = _claimTimeKeys(viewer, marketConfig.longToken);
@@ -1177,6 +1253,10 @@ abstract contract GmxTestScenarios is GmxTestSetup {
   // whole negative impact is escrowed as claimable collateral, the pool's real long (report 0)
   // and the large external short that makes closing the long impact-heavy (report 1).
   function _prepareForcedDecreaseState() internal {
+    ClaimSetup memory setup = _getClaimSetup();
+    require(setup.longSizeUsd >= marketConfig.sizeDeltaUsd, "forced decrease has insufficient long capacity");
+    require(setup.impactSizeUsd > setup.longSizeUsd, "forced decrease has insufficient short capacity");
+
     _fundClaimPool();
     bytes32 maxNegativePositionImpactFactorKey = keccak256(
       abi.encode(_hashString("MAX_POSITION_IMPACT_FACTOR"), marketConfig.market, false)
@@ -1184,8 +1264,8 @@ abstract contract GmxTestScenarios is GmxTestSetup {
     vm.prank(_getGmxController());
     GMX_DATA_STORE.setUint(maxNegativePositionImpactFactorKey, 1);
 
-    _openClaimPoolLong(); // consumes signed report 0
-    _openClaimImpactShort(); // consumes signed report 1
+    _openClaimPoolLong(setup); // consumes signed report 0
+    _openClaimImpactShort(setup); // consumes signed report 1
   }
 
   function _makePoolLongLiquidatable() internal {

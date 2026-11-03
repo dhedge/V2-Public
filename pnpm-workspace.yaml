@@ -9,3 +9,5 @@ allowBuilds:
   web3: true
   web3-bzz: true
   web3-shh: true
+patchedDependencies:
+  '@uniswap/v3-periphery@1.4.4': patches/@uniswap__v3-periphery@1.4.4.patch

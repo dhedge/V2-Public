@@ -1,8 +1,10 @@
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { proposeTx, tryVerify } from "../../../deploymentHelpers";
+import { proposeTx } from "../../../helpers/safe";
+import { tryVerify } from "../../../helpers/verify";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../../types";
+import { OZ_V3_INITIALIZER_KINDS } from "../../../helpers/upgradeValidation";
 
 export const easySwapperV2Job: IJob<void> = async (
   config: IUpgradeConfig,
@@ -50,7 +52,7 @@ const deployEasySwapperV2 = async (
     addresses.flatMoney.swapper,
     60 * 60, // 60 minutes
   ];
-  const easySwapperV2 = await upgrades.deployProxy(EasySwapperV2, initParams);
+  const easySwapperV2 = await upgrades.deployProxy(EasySwapperV2, initParams, { unsafeAllow: OZ_V3_INITIALIZER_KINDS });
   await easySwapperV2.deployed();
   const easySwapperV2ProxyAddress = easySwapperV2.address;
 
@@ -107,7 +109,7 @@ const upgradeEasySwapperV2 = async (
   if (!proxy) return console.warn("EasySwapperV2Proxy missing... skipping.");
 
   const EasySwapperV2 = await ethers.getContractFactory("EasySwapperV2");
-  const newLogic = await upgrades.prepareUpgrade(proxy, EasySwapperV2);
+  const newLogic = await upgrades.prepareUpgrade(proxy, EasySwapperV2, { unsafeAllow: OZ_V3_INITIALIZER_KINDS });
   console.log("New logic deployed to: ", newLogic);
   const implementation = await ethers.getContractAt("EasySwapperV2", newLogic);
 

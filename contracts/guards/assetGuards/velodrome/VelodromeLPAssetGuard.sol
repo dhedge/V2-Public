@@ -34,7 +34,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 import "../ERC20Guard.sol";
 import "../../../interfaces/velodrome/IVelodromePair.sol";

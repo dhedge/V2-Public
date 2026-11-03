@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import {OdosAPIHelper} from "test/integration/common/odos/OdosAPIHelper.sol";
+import {KyberSwapAPIHelper} from "test/integration/common/kyberSwap/KyberSwapAPIHelper.sol";
 import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
 import {IERC20} from "contracts/interfaces/IERC20.sol";
 import {ISwapper} from "contracts/interfaces/flatMoney/swapper/ISwapper.sol";
@@ -13,7 +14,7 @@ import {AaveV3TestSetup} from "test/integration/common/aaveV3/AaveV3TestSetup.t.
 import {IPMarket} from "contracts/interfaces/pendle/IPMarket.sol";
 import {IAaveV3Pool} from "contracts/interfaces/aave/v3/IAaveV3Pool.sol";
 
-abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
+abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper, KyberSwapAPIHelper {
   uint256 private immutable chainId;
 
   constructor(uint256 _chainId) {
@@ -22,7 +23,7 @@ abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
 
   function setUp() public virtual override {
     super.setUp();
-    __OdosAPIHelper_init(true);
+    __SwapdataCacheManager_init(true);
   }
 
   function test_can_withdraw_from_pool_with_assets_supplied_and_borrowed_in_aave_v3_with_swapdata_PT_not_expired()
@@ -99,19 +100,11 @@ abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
     for (uint256 i = 0; i < srcData.length; i++) {
       srcData[i].token = IERC20(swapDataParams.srcData[i].asset);
       srcData[i].amount = swapDataParams.srcData[i].amount;
-      srcData[i].aggregatorData.routerKey = bytes32("ODOS_V2");
-
-      OdosAPIHelper.OdosFunctionStruct memory params = OdosAPIHelper.OdosFunctionStruct({
-        srcAmount: swapDataParams.srcData[i].amount,
-        srcToken: swapDataParams.srcData[i].asset,
-        destToken: swapDataParams.dstData.asset,
-        user: swapper,
-        slippage: 1
-      });
-
-      (, bytes memory swapData) = getDataFromOdos(params, chainId, true, "v2");
-
-      srcData[i].aggregatorData.swapData = swapData;
+      (srcData[i].aggregatorData.routerKey, srcData[i].aggregatorData.swapData) = _getSwapData(
+        swapDataParams.srcData[i].amount,
+        swapDataParams.srcData[i].asset,
+        swapDataParams.dstData.asset
+      );
     }
 
     withdrawData.srcData = abi.encode(srcData);
@@ -164,5 +157,22 @@ abstract contract AaveV3TestFFI is AaveV3TestSetup, OdosAPIHelper {
 
       assertGt(token0ToLendUnderlyingPoolBalanceAfterWithdraw, 0, "Pool should have PT underlying dust after withdraw");
     }
+  }
+
+  function _getSwapData(
+    uint256 srcAmount,
+    address srcToken,
+    address destToken
+  ) internal virtual returns (bytes32 routerKey, bytes memory swapData) {
+    OdosAPIHelper.OdosFunctionStruct memory params = OdosAPIHelper.OdosFunctionStruct({
+      srcAmount: srcAmount,
+      srcToken: srcToken,
+      destToken: destToken,
+      user: swapper,
+      slippage: 1
+    });
+
+    (, swapData) = getDataFromOdos(params, chainId, true, "v2");
+    routerKey = bytes32("ODOS_V2");
   }
 }

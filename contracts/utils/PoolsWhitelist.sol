@@ -16,7 +16,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/v3/contracts/access/Ownable.sol";
 
 import {SafeSignerAccess} from "./SafeSignerAccess.sol";
 

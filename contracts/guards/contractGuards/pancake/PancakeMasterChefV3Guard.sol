@@ -8,7 +8,7 @@ import {UniswapV3PriceLibrary} from "../../../utils/uniswap/UniswapV3PriceLibrar
 import {IMulticall} from "@uniswap/v3-periphery/contracts/interfaces/IMulticall.sol";
 import {IPoolLogic} from "../../../interfaces/IPoolLogic.sol";
 import {IHasSupportedAsset} from "../../../interfaces/IHasSupportedAsset.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 import {IPoolManagerLogic} from "../../../interfaces/IPoolManagerLogic.sol";
 import {IERC721VerifyingGuard} from "../../../interfaces/guards/IERC721VerifyingGuard.sol";
 import {PancakeCLBaseContractGuard} from "./PancakeCLBaseContractGuard.sol";
@@ -41,7 +41,7 @@ contract PancakeMasterChefV3Guard is IERC721VerifyingGuard, PancakeCLBaseContrac
 
     require(
       IHasSupportedAsset(poolManagerLogic).isSupportedAsset(address(nonfungiblePositionManager)),
-      "pancake CL asset not enabled"
+      "cl asset not enabled"
     );
 
     if (method == IPancakeNonfungiblePositionManager.collect.selector) {

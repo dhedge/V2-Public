@@ -118,7 +118,7 @@ abstract contract UniswapV3NonfungiblePositionGuardTestSetup is SingleFundTestSe
   function test_revert_mint_when_nft_position_not_enabled() public {
     (int24 lower, int24 upper) = _tickRange(1);
     vm.prank(manager);
-    vm.expectRevert("uniswap asset not enabled");
+    vm.expectRevert("cl asset not enabled");
     fund.execTransaction(nftManagerAddr, _mintCalldata(token0, token1, lower, upper, amount0, amount1));
   }
 
@@ -232,6 +232,30 @@ abstract contract UniswapV3NonfungiblePositionGuardTestSetup is SingleFundTestSe
     assertApproxEqRel(fundManagerLogic.totalFundValue(), valueBefore, 0.00001e18);
     (, , , , , , , uint128 liqAfter, , , , ) = nftManager.positions(tokenId);
     assertGt(uint256(liqAfter), uint256(liqBefore));
+  }
+
+  /// @dev An emptied position stays tracked, so the position asset can be dropped from the vault
+  /// while the NFT still exists. Increasing liquidity on it afterwards would move vault tokens into
+  /// a position nothing values.
+  function test_revert_increaseLiquidity_when_nft_position_not_enabled() public {
+    _enableNftPosition();
+    uint256 tokenId = _mintAsPool(1);
+    _decreaseAllLiquidity(tokenId);
+    vm.prank(manager);
+    fund.execTransaction(nftManagerAddr, _collectCalldata(tokenId, address(fund)));
+
+    vm.prank(manager);
+    fundManagerLogic.changeAssets(new IHasSupportedAsset.Asset[](0), _toArray(nftManagerAddr));
+    assertFalse(fundManagerLogic.isSupportedAsset(nftManagerAddr));
+    assertEq(_trackedTokenIds().length, 1);
+
+    uint256 valueBefore = fundManagerLogic.totalFundValue();
+
+    vm.prank(manager);
+    vm.expectRevert("cl asset not enabled");
+    fund.execTransaction(nftManagerAddr, _increaseCalldata(tokenId));
+
+    assertEq(fundManagerLogic.totalFundValue(), valueBefore);
   }
 
   function test_decreaseLiquidity_to_zero_preserves_value_and_price() public {

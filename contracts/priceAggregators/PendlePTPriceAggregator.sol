@@ -17,7 +17,7 @@
 
 pragma solidity 0.8.28;
 
-import {Math} from "@openzeppelin/v5/contracts/utils/math/Math.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IAggregatorV3Interface} from "../interfaces/IAggregatorV3Interface.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";

@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IAddresses, IJob, IUpgradeConfig, IVersions, IFileNames } from "../../../types";
 import { velodromeCLGaugeContractGuardJob } from "../contractGuards/velodromeCLGaugeContractGuardJob";
-import { proposeContractGuardConfiguration } from "../assetContractGuardHelpers";
+import { proposeContractGuardConfiguration } from "../contractGuards/configureContractGuard";
 
 export const enableVelodromeCLGaugeContractGuardJob: IJob<void> = async (
   config: IUpgradeConfig,

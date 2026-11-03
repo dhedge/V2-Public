@@ -10,6 +10,7 @@ import {Governance} from "contracts/Governance.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {IDytmOfficeContractGuard} from "contracts/interfaces/dytm/IDytmOfficeContractGuard.sol";
 import {DytmOfficeAssetGuard} from "contracts/guards/assetGuards/dytm/DytmOfficeAssetGuard.sol";
+import {NestedVaultAssetGuard} from "contracts/guards/assetGuards/NestedVaultAssetGuard.sol";
 import {DytmWithdrawProcessor} from "contracts/swappers/easySwapperV2/DytmWithdrawProcessor.sol";
 import {BackboneSetup} from "test/integration/utils/foundry/BackboneSetup.t.sol";
 import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
@@ -115,13 +116,19 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
       address(dytmWithdrawProcessor)
     );
     governance.setAssetGuard(uint16(106), address(dytmOfficeAssetGuard)); // Asset type 106 for DYTM
+    if (isCollateralDhedgePoolToken) {
+      governance.setAssetGuard(
+        uint16(AssetTypes.AssetTypeIncomplete.NESTED_VAULT),
+        address(new NestedVaultAssetGuard())
+      );
+    }
 
     // Add dytm office as supported asset
     assetHandler.addAsset(dytmOffice, uint16(106), _usdPriceAggregator);
     if (isCollateralDhedgePoolToken) {
       // Deploy DHedgePoolAggregator via deployCode (0.8.28 contract, can't use `new` from 0.7.6)
       address dhedgePoolAggregator = deployCode("DHedgePoolAggregator.sol", abi.encode(collateralAsset));
-      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), dhedgePoolAggregator);
+      assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.NESTED_VAULT), dhedgePoolAggregator);
     } else {
       assetHandler.addAsset(collateralAsset, uint16(AssetTypes.AssetTypeIncomplete.CHAINLINK), collateralOracle);
     }
@@ -172,7 +179,7 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
 
     // Create pool without DYTM Office initially (contract guard must be set before addAssetCheck)
     IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](2);
-    supportedAssets[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: true});
+    supportedAssets[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: !isCollateralDhedgePoolToken});
     supportedAssets[1] = IHasSupportedAsset.Asset({asset: borrowAsset, isDeposit: true});
 
     dytmTestPool = PoolLogic(
@@ -226,9 +233,17 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
     uint256 collateralAmount = collateralAmountNormalized * (10 ** IERC20Extended(collateralAsset).decimals());
 
     // investor deposits collateral into the dytm test pool
-    deal(collateralAsset, investor, collateralAmount);
-    IERC20Extended(collateralAsset).approve(address(dytmTestPool), type(uint256).max);
-    dytmTestPool.deposit(collateralAsset, collateralAmount);
+    if (isCollateralDhedgePoolToken) {
+      // A nested vault cannot be a deposit asset: the pool receives the collateral by transfer and
+      // the investor the shares a deposit of that value would have minted.
+      deal(collateralAsset, address(dytmTestPool), collateralAmount);
+      uint256 shares = PoolManagerLogic(dytmTestPool.poolManagerLogic()).assetValue(collateralAsset, collateralAmount);
+      deal(address(dytmTestPool), investor, shares, true);
+    } else {
+      deal(collateralAsset, investor, collateralAmount);
+      IERC20Extended(collateralAsset).approve(address(dytmTestPool), type(uint256).max);
+      dytmTestPool.deposit(collateralAsset, collateralAmount);
+    }
 
     // investor also deposits into dytm market via office, so that the pool can borrow later
     uint256 amountToSupplyBorrowAsset = borrowAmountNormalized * 10 * (10 ** IERC20Extended(borrowAsset).decimals());
@@ -515,7 +530,7 @@ abstract contract DytmTestSetup is BackboneSetup, IntegrationDeployer {
     vm.startPrank(manager);
 
     IHasSupportedAsset.Asset[] memory supportedAssets = new IHasSupportedAsset.Asset[](2);
-    supportedAssets[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: true});
+    supportedAssets[0] = IHasSupportedAsset.Asset({asset: collateralAsset, isDeposit: !isCollateralDhedgePoolToken});
     supportedAssets[1] = IHasSupportedAsset.Asset({asset: borrowAsset, isDeposit: true});
 
     PoolLogic nonWhitelistedPool = PoolLogic(

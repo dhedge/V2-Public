@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol";
+import "@openzeppelin/v3/contracts/token/ERC721/IERC721Enumerable.sol";
 
 import "./IOptionMarket.sol";
 

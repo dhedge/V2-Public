@@ -6,9 +6,9 @@ import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {IAssetHandler} from "contracts/interfaces/IAssetHandler.sol";
 import {SkyPSM3ContractGuardTestSetup} from "test/integration/common/sky/SkyPSM3ContractGuardTestSetup.t.sol";
 import {BaseSetup} from "test/integration/utils/foundry/chains/BaseSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
-contract SkyPSM3ContractGuardTestBase is SkyPSM3ContractGuardTestSetup, BaseSetup {
-  uint256 private testForkBlockNumber = 27176457;
+contract SkyPSM3ContractGuardTestBaseSkip is SkyPSM3ContractGuardTestSetup, BaseSetup {
   address private skyPSM3 = 0x1601843c5E9bC251A3272907010AFa41Fa18347E;
   address private susdsUsdsPriceAggregator = 0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E;
 
@@ -28,7 +28,7 @@ contract SkyPSM3ContractGuardTestBase is SkyPSM3ContractGuardTestSetup, BaseSetu
 
   constructor()
     SkyPSM3ContractGuardTestSetup(skyPSM3, usdsData, susdsData, susdsUsdsPriceAggregator)
-    BaseSetup(testForkBlockNumber)
+    BaseSetup(ForkBlocks.BASE)
   {}
 
   function setUp() public override(SkyPSM3ContractGuardTestSetup, BaseSetup) {

@@ -18,7 +18,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IAaveV3Pool} from "../../interfaces/aave/v3/IAaveV3Pool.sol";
 import {IAToken} from "../../interfaces/aave/v3/IAToken.sol";

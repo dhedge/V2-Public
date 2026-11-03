@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { proposeTx } from "../../deploymentHelpers";
+import { proposeTx } from "../../helpers/safe";
 import { IJob, IProposeTxProperties, IUpgradeConfig, IVersions, IFileNames } from "../../types";
 
 export const unpauseJob: IJob<void> = async (

@@ -3,9 +3,9 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
-import {AaveV3TestPolygon, AaveV3TestPolygonSharedData} from "test/integration/polygon/aave/AaveV3TestPolygon.t.sol";
+import {AaveV3TestPolygon} from "test/integration/polygon/aave/AaveV3TestPolygon.t.sol";
 import {DeploymentDryRunPolygon} from "test/integration/utils/foundry/dryRun/DeploymentDryRunPolygon.t.sol";
 import {PolygonConfig} from "test/integration/utils/foundry/config/PolygonConfig.sol";
 import {PoolLogic} from "contracts/PoolLogic.sol";
@@ -14,9 +14,10 @@ import {PoolFactory} from "contracts/PoolFactory.sol";
 import {AssetTypes} from "test/integration/utils/foundry/AssetTypes.sol";
 import {AssetHandler} from "contracts/priceAggregators/AssetHandler.sol";
 import {Governance} from "contracts/Governance.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3DryRunPolygon is DeploymentDryRunPolygon {
-  constructor() DeploymentDryRunPolygon(AaveV3TestPolygonSharedData.FORK_BLOCK_NUMBER, getVaultsToCheck()) {}
+  constructor() DeploymentDryRunPolygon(ForkBlocks.POLYGON, getVaultsToCheck()) {}
 
   function setUp() public override {
     super.setUp();

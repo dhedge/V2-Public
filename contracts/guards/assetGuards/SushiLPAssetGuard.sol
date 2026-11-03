@@ -37,8 +37,8 @@ pragma experimental ABIEncoderV2;
 import "./ERC20Guard.sol";
 import "../../interfaces/sushi/IMiniChefV2.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts/access/Ownable.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
 /// @title Sushi LP token asset guard
 /// @dev Asset type = 2

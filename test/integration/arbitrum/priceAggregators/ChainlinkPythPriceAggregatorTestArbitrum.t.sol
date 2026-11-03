@@ -5,6 +5,7 @@ pragma abicoder v2;
 // solhint-disable-next-line max-line-length
 import {ChainlinkPythPriceAggregatorTestSetup} from "test/integration/common/priceAggregators/ChainlinkPythPriceAggregatorTestSetup.t.sol";
 import {ArbitrumConfig} from "test/integration/utils/foundry/config/ArbitrumConfig.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract ChainlinkPythPriceAggregatorTestArbitrum is ChainlinkPythPriceAggregatorTestSetup {
   /// @dev WETH's configuration from `config/arbitrum/dHEDGE Assets list.json`.
@@ -20,7 +21,7 @@ contract ChainlinkPythPriceAggregatorTestArbitrum is ChainlinkPythPriceAggregato
   {}
 
   function setUp() public override {
-    vm.createSelectFork("arbitrum", 489036888);
+    vm.createSelectFork("arbitrum", ForkBlocks.ARBITRUM);
 
     super.setUp();
   }

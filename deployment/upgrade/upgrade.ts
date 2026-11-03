@@ -1,10 +1,12 @@
 import fs from "fs";
 import { task, types } from "hardhat/config";
-import { executeInSeries, nonceLog, tryVerify } from "../deploymentHelpers";
+import { nonceLog } from "../helpers/safe";
+import { tryVerify } from "../helpers/verify";
 import { IJob, IVersions } from "../types";
-import { getDeploymentData } from "./getDeploymentData";
+import { getDeploymentData } from "../deploymentData";
 import { aaveV3LendingPoolAssetGuardJob } from "./jobs/assetGuards/aaveV3LendingPoolAssetGuardJob";
 import { erc20GuardJob } from "./jobs/assetGuards/erc20AssetGuardJob";
+import { nestedVaultAssetGuardJob } from "./jobs/assetGuards/nestedVaultAssetGuardJob";
 import { uniV3AssetGuardJob } from "./jobs/assetGuards/uniV3AssetGuardJob";
 import { assetHandlerJob } from "./jobs/assetHandlerJob";
 import { assetsJob } from "./jobs/assetsJob";
@@ -45,7 +47,6 @@ import { velodromeNonfungiblePositionGuardJob } from "./jobs/contractGuards/velo
 import { enableVelodromeCLGaugeContractGuardJob } from "./jobs/velodromeCL/enableVelodromeCLGaugeContractGuardJob";
 import { byPassAssetGuardJob } from "./jobs/assetGuards/byPassAssetGuardJob";
 import { flatMoneyPerpMarketAssetGuardJob } from "./jobs/assetGuards/flatMoneyPerpMarketAssetGuardJob";
-import { velodromeNonfungiblePositionGuardOldJob } from "./jobs/contractGuards/velodromeNonfungiblePositionGuardOldJob";
 import { rewardAssetGuardJob } from "./jobs/assetGuards/rewardAssetGuardJob";
 import { compoundV3CometRewardsContractGuardJob } from "./jobs/contractGuards/compoundV3CometRewardsContractGuardJob";
 import { compoundV3CometAssetGuardJob } from "./jobs/assetGuards/compoundV3CometAssetGuardJob";
@@ -180,6 +181,7 @@ const jobs: { [key: string]: IJob<void> } = {
   hyperliquidpositionguard: hyperliquidPositionGuardJob,
   hyperliquidspotguard: hyperliquidSpotGuardJob,
   hyperliquiderc20guard: hyperliquidERC20GuardJob,
+  nestedvaultassetguard: nestedVaultAssetGuardJob,
   midasmtokenassetguard: midasMTokenAssetGuardJob,
   midaspendingredemptionassetguard: midasPendingRedemptionAssetGuardJob,
 
@@ -195,7 +197,6 @@ const jobs: { [key: string]: IJob<void> } = {
   oneinchv6guard: oneInchV6ContractGuardJob,
   velodromenonfungiblepositionguard: velodromeNonfungiblePositionGuardJob,
   enablevelodromeclgaugecontractguard: enableVelodromeCLGaugeContractGuardJob,
-  velodromenonfungiblepositionguardold: velodromeNonfungiblePositionGuardOldJob,
   compoundv3cometrewardscontractguard: compoundV3CometRewardsContractGuardJob,
   easyswapperv2contractguard: easySwapperV2ContractGuardJob,
   gmxexchangeroutercontractguard: gmxExchangeRouterContractGuardJob,
@@ -303,24 +304,22 @@ upgradeTask.setAction(async (taskArgs, hre) => {
   };
 
   try {
-    const jobsToRun = selectedJobs.map(
-      (key) => () =>
-        jobs[key](
-          {
-            execute: taskArgs.execute,
-            restartnonce: taskArgs.restartnonce,
-            useNonce: taskArgs.usenonce,
-            newTag: version,
-            oldTag: version,
-            chainId: network.chainId,
-          },
-          hre,
-          versions,
-          filenames,
-          addresses,
-        ),
-    );
-    await executeInSeries(jobsToRun);
+    for (const key of selectedJobs) {
+      await jobs[key](
+        {
+          execute: taskArgs.execute,
+          restartnonce: taskArgs.restartnonce,
+          useNonce: taskArgs.usenonce,
+          newTag: version,
+          oldTag: version,
+          chainId: network.chainId,
+        },
+        hre,
+        versions,
+        filenames,
+        addresses,
+      );
+    }
   } catch (e) {
     console.error(e);
     console.log("UPGRADE EXIT UNEXPECTED");

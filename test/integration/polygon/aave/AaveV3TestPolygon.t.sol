@@ -6,16 +6,10 @@ pragma abicoder v2;
 import {AaveV3TestSetup} from "test/integration/common/aaveV3/AaveV3TestSetup.t.sol";
 import {PolygonSetup} from "test/integration/utils/foundry/chains/PolygonSetup.t.sol";
 import {PolygonConfig} from "test/integration/utils/foundry/config/PolygonConfig.sol";
-
-library AaveV3TestPolygonSharedData {
-  uint256 public constant FORK_BLOCK_NUMBER = 93443000;
-}
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 contract AaveV3TestPolygon is AaveV3TestSetup, PolygonSetup {
-  constructor()
-    AaveV3TestSetup(_createAaveV3TestConfig())
-    PolygonSetup(AaveV3TestPolygonSharedData.FORK_BLOCK_NUMBER)
-  {}
+  constructor() AaveV3TestSetup(_createAaveV3TestConfig()) PolygonSetup(ForkBlocks.POLYGON) {}
 
   function setUp() public virtual override(AaveV3TestSetup, PolygonSetup) {
     super.setUp();

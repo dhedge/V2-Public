@@ -12,6 +12,7 @@ library PolygonConfig {
   address public constant NFT_TRACKER_PROD = 0x195AFA2ef88b0A52DFE561E12Fac30F28860A489;
   address public constant SLIPPAGE_ACCUMULATOR_PROD = 0x8fab778ce0e6f2d3fa3c73C703310C824840a4B6;
   address public constant USD_PRICE_AGGREGATOR_PROD = 0xE4831972d8E78A947051BCfe9658Cdf4BEFF9c51;
+  address public constant EASY_SWAPPER_V2_PROD = 0x45b90480D6F643dE2f128db091A357C3c90399f2;
 
   // Tokens
   address public constant USDC = 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359;

@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {PendlePTAssetGuard} from "../../../guards/assetGuards/pendle/PendlePTAssetGuard.sol";
 import {IPActionSwapPTV3} from "../../../interfaces/pendle/IPActionSwapPTV3.sol";

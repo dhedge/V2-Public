@@ -2,8 +2,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
+import {IERC721Enumerable} from "@openzeppelin/v3/contracts/token/ERC721/IERC721Enumerable.sol";
 
 import {Governance} from "contracts/Governance.sol";
 import {PoolFactory} from "contracts/PoolFactory.sol";

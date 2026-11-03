@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { tryVerify } from "../../deploymentHelpers";
+import { tryVerify } from "../../helpers/verify";
 import { IJob, IAddresses, IUpgradeConfig, IVersions, IFileNames } from "../../types";
 
 export const slippageAccumulatorJob: IJob<void> = async (

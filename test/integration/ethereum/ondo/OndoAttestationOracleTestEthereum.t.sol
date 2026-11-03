@@ -2,12 +2,13 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/v3/contracts/proxy/TransparentUpgradeableProxy.sol";
 
 import {IGMTokenManager} from "contracts/interfaces/ondo/IGMTokenManager.sol";
 import {IOndoAttestationOracle} from "contracts/interfaces/ondo/IOndoAttestationOracle.sol";
 import {OndoAttestationOracleTestSetup} from "test/integration/common/ondo/OndoAttestationOracleTestSetup.t.sol";
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
+import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 
 contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, EthereumSetup {
   // GOOGLon used as second token in multi-token tests
@@ -26,7 +27,7 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
 
   function test_initialize_setsStateCorrectly() public view {
     // gmTokenManager
-    assertEq(address(IOndoAttestationOracle(attestationOracle).gmTokenManager()), GM_TOKEN_MANAGER);
+    assertEq(address(IOndoAttestationOracle(attestationOracle).gmTokenManager()), EthereumConfig.ONDO_GM_TOKEN_MANAGER);
 
     // owner
     (bool ok1, bytes memory data1) = attestationOracle.staticcall(abi.encodeWithSignature("owner()"));
@@ -58,7 +59,7 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
         INITIALIZE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           ONDO_USER_ID,
           MAX_PROOF_AGE,
           SANITY_DEVIATION_BPS,
@@ -101,7 +102,7 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
         INITIALIZE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           bytes32(0),
           MAX_PROOF_AGE,
           SANITY_DEVIATION_BPS,
@@ -125,7 +126,7 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
         INITIALIZE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           ONDO_USER_ID,
           MAX_PROOF_AGE,
           SANITY_DEVIATION_BPS,
@@ -146,7 +147,7 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
         INITIALIZE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           ONDO_USER_ID,
           uint256(0),
           SANITY_DEVIATION_BPS,
@@ -167,7 +168,7 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
         INITIALIZE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           ONDO_USER_ID,
           MAX_PROOF_AGE,
           SANITY_DEVIATION_BPS,
@@ -186,7 +187,15 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
     (bool ok, ) = freshProxy.call(
       abi.encodePacked(
         INITIALIZE_SELECTOR,
-        abi.encode(owner, GM_TOKEN_MANAGER, ONDO_USER_ID, MAX_PROOF_AGE, uint256(0), MIN_QUOTE_VALUE, MAX_QUOTE_VALUE)
+        abi.encode(
+          owner,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
+          ONDO_USER_ID,
+          MAX_PROOF_AGE,
+          uint256(0),
+          MIN_QUOTE_VALUE,
+          MAX_QUOTE_VALUE
+        )
       )
     );
     ok;
@@ -201,7 +210,7 @@ contract OndoAttestationOracleTestEthereum is OndoAttestationOracleTestSetup, Et
         INITIALIZE_SELECTOR,
         abi.encode(
           owner,
-          GM_TOKEN_MANAGER,
+          EthereumConfig.ONDO_GM_TOKEN_MANAGER,
           ONDO_USER_ID,
           MAX_PROOF_AGE,
           uint256(10_001),

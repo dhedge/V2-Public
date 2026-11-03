@@ -72,6 +72,9 @@ const torosPools = {
   BTCP1X: "0x8990f5e57a8E0b5CABB68D1CD5bd790A92e32f5C",
   BTCP2X: "0x99C917097D455d54F68A6b8e73095E30badddAcE",
   BTCP3X: "0x31481Fa8e8802EAcF1cfa3aaBDD11be24FcC3476",
+  NEAR1X: "0x75d1c951e5BCE4CcA5091901A7e7F2a697d99e5E",
+  NEARBULL2X: "0xF1078306A52Aa9370e846f93ff3dD6591d028051",
+  NEARBULL3X: "0xb6bd70E974A77E9440ABa6E44865c7bCfA585954",
 };
 
 export const gmxTestVaults = {
@@ -88,12 +91,14 @@ const usdPriceFeeds = {
   hype: "0xf9ce4fE2F0EcE0362cb416844AE179a49591D567",
   crv: "0xaebDA2c976cfd1eE1977Eac079B4382acb849325",
   pump: "0x0C997958ccE7A0403AEA7E34d14bbaDA897B5bb3",
+  near: "0xBF5C3fB2633e924598A46B9D07a174a9DBcF57C0",
 };
 
 const pyth = {
   priceFeedContract: "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
   priceIds: {
     pump: "0x7a01fca212788bba7c5bf8c9efd576a8a722f070d2c17596ff7bb609b8d5c3b9",
+    near: "0xc415de8d2eba7db216527dff4b60e8f3a5311c740dadb233e13e12547e226750",
   },
 };
 
@@ -119,6 +124,7 @@ export const arbitrumProdData: IAddresses = {
   assets: {
     nativeAssetWrapper: assets.weth,
     usdc: assets.usdc,
+    usdcNative: assets.usdcNative,
     dht: assets.dht,
   },
 
@@ -241,6 +247,9 @@ export const arbitrumProdData: IAddresses = {
       torosPools.BTCP1X,
       torosPools.BTCP2X,
       torosPools.BTCP3X,
+      torosPools.NEAR1X,
+      torosPools.NEARBULL2X,
+      torosPools.NEARBULL3X,
     ],
   },
 
@@ -428,6 +437,18 @@ export const arbitrumProdData: IAddresses = {
         poolLogic: torosPools.HYPEBULL3X,
         withdrawalAsset: assets.usdcNative,
       },
+      {
+        poolLogic: torosPools.NEAR1X,
+        withdrawalAsset: assets.usdcNative,
+      },
+      {
+        poolLogic: torosPools.NEARBULL2X,
+        withdrawalAsset: assets.usdcNative,
+      },
+      {
+        poolLogic: torosPools.NEARBULL3X,
+        withdrawalAsset: assets.usdcNative,
+      },
     ],
     virtualTokenResolver: [
       {
@@ -535,6 +556,21 @@ export const arbitrumProdData: IAddresses = {
           minConfidenceRatio: 50, // 100/50 => +-2% price deviation acceptable,
         },
       },
+      {
+        virtualToken: "0x1FF7F3EFBb9481Cbd7db4F932cBCD4467144237C", // virtual NEAR
+        virtualTokenMultiplier: BigNumber.from(10).pow(28), // 60 - 8 (normalized oracle decimals) - 24 (GMX token decimals)
+        oracleLookupType: 1, // 1 = ChainlinkPythLib
+        onchainOracle: {
+          oracleContract: usdPriceFeeds.near,
+          maxAge: 90_000,
+        },
+        pythOracleContract: pyth.priceFeedContract,
+        pythOracleData: {
+          priceId: pyth.priceIds.near,
+          maxAge: 86_400,
+          minConfidenceRatio: 50,
+        },
+      },
     ],
   },
 
@@ -612,16 +648,6 @@ export const arbitrumProdData: IAddresses = {
   kyberSwap: {
     routerV2: "0x6131B5fae19EA4f9D964eAc0408E4408b66337b5",
   },
-
-  rewardAssetSetting: [
-    {
-      rewardToken: assets.wsteth, // wstETH
-      linkedAssetTypes: [],
-      linkedAssets: [
-        "0x71fBF40651E9D4278a74586AfC99F307f369Ce9A", // PT-wstETH-25JUN2026
-      ],
-    },
-  ],
 
   pendle: {
     pendleRouterV4: "0x888888888889758F76e7103c6CbF23ABbF58F946",

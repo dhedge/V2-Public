@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Address } from "../../../types";
-import { tryVerify } from "../../../deploymentHelpers";
+import { tryVerify } from "../../../helpers/verify";
 import {
   IAssetConfig,
   TAssetConfig,
@@ -15,7 +15,9 @@ const validateConfig = (
     oracleConfig.oracleType != "HyperliquidSpotPriceAggregator" ||
     !oracleConfig.specificOracleConfig ||
     !("spotIndex" in oracleConfig.specificOracleConfig) ||
-    !("usdcUsdFeed" in oracleConfig.specificOracleConfig)
+    !("usdcUsdFeed" in oracleConfig.specificOracleConfig) ||
+    !("referencePerpAssetId" in oracleConfig.specificOracleConfig) ||
+    !("maxDeviationBps" in oracleConfig.specificOracleConfig)
   ) {
     return false;
   }
@@ -30,13 +32,16 @@ export const deployHyperliquidSpotPriceAggregator: TOracleDeployer = async (
     throw new Error(`${oracleConfig.assetName} has not a valid HyperliquidSpotPriceAggregator config`);
   }
 
-  const { spotIndex, usdcUsdFeed } = oracleConfig.specificOracleConfig;
+  const { spotIndex, usdcUsdFeed, referencePerpAssetId, maxDeviationBps } = oracleConfig.specificOracleConfig;
+
+  // The oracle price precompile takes the perp index: the asset ID itself for core perps, minus 100000 for HIP-3.
+  const referencePerpIndex = referencePerpAssetId >= 100_000 ? referencePerpAssetId - 100_000 : referencePerpAssetId;
 
   const HyperliquidSpotPriceAggregator = await hre.ethers.getContractFactory("HyperliquidSpotPriceAggregator");
 
   console.log("Deploying HyperliquidSpotPriceAggregator oracle...");
 
-  const args: [number, Address] = [spotIndex, usdcUsdFeed];
+  const args: [number, Address, number, number] = [spotIndex, usdcUsdFeed, referencePerpIndex, maxDeviationBps];
   const aggregator = await HyperliquidSpotPriceAggregator.deploy(...args);
   await aggregator.deployed();
 

@@ -34,24 +34,21 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/v3/contracts/math/SafeMath.sol";
 
 import {IERC20Extended} from "../../interfaces/IERC20Extended.sol";
 import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 import {IPoolManagerLogic} from "../../interfaces/IPoolManagerLogic.sol";
 import {IHasAssetInfo} from "../../interfaces/IHasAssetInfo.sol";
-import {IHasSupportedAsset} from "../../interfaces/IHasSupportedAsset.sol";
 import {IRewardsOnlyGauge} from "../../interfaces/balancer/IRewardsOnlyGauge.sol";
 import {IRewardsContract} from "../../interfaces/balancer/IRewardsContract.sol";
-import {IAddAssetCheckGuard} from "../../interfaces/guards/IAddAssetCheckGuard.sol";
 import {ERC20Guard} from "./ERC20Guard.sol";
+import {NonDepositAssetGuard} from "./shared/NonDepositAssetGuard.sol";
 
 /// @title Balancer V2 Gauge asset guard
 /// @dev Asset type = 10
-contract BalancerV2GaugeAssetGuard is ERC20Guard, IAddAssetCheckGuard {
+contract BalancerV2GaugeAssetGuard is ERC20Guard, NonDepositAssetGuard {
   using SafeMath for uint256;
-
-  bool public override isAddAssetCheckGuard = true;
 
   /// @notice Creates transaction data for withdrawing staked tokens
   /// @dev The same interface can be used for other types of stakeable tokens
@@ -115,10 +112,6 @@ contract BalancerV2GaugeAssetGuard is ERC20Guard, IAddAssetCheckGuard {
       uint256 rewardBalance = gauge.claimable_reward(pool, rewardToken);
       balance = balance.add(_assetValue(factory, poolManager, rewardToken, rewardBalance));
     }
-  }
-
-  function addAssetCheck(address, IHasSupportedAsset.Asset calldata _asset) external pure override {
-    require(!_asset.isDeposit, "deposit not supported");
   }
 
   function _assetValue(

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.6 <0.9.0;
+pragma solidity 0.8.28;
 
 import {CoreExecution} from "./hyper-core/CoreExecution.sol";
-import {DoubleEndedQueue} from "@openzeppelin/v5/contracts/utils/structs/DoubleEndedQueue.sol";
+import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {HLConstants} from "./lib/PrecompileLib.sol";
 
 contract HyperCore is CoreExecution {

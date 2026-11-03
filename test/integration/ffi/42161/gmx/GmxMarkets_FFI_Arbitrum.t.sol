@@ -275,6 +275,12 @@ contract GmxSuiTestFFIArbitrum is GmxCollateralConfig {
   }
 }
 
+contract GmxNearTestFFIArbitrum is GmxCollateralConfig {
+  function _getMarketConfig() internal pure override returns (MarketConfig memory config) {
+    config = _wethCollateralConfig("NEAR", GmxTestSharedData.GMX_NEAR_MARKET, GmxTestSharedData.GMX_NEAR_VIRTUAL_TOKEN);
+  }
+}
+
 contract GmxDogeTestFFIArbitrum is GmxCollateralConfig {
   function _getMarketConfig() internal pure override returns (MarketConfig memory config) {
     config = _wethCollateralConfig(

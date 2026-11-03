@@ -9,16 +9,17 @@ import {IPoolLogic} from "contracts/interfaces/IPoolLogic.sol";
 import {IValueManipulationCheck} from "contracts/interfaces/IValueManipulationCheck.sol";
 import {IHasSupportedAsset} from "contracts/interfaces/IHasSupportedAsset.sol";
 import {IAggregatorV3Interface} from "contracts/interfaces/IAggregatorV3Interface.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 import {ClosedContractGuard} from "contracts/guards/contractGuards/ClosedContractGuard.sol";
 
 import {EthereumSetup} from "test/integration/utils/foundry/chains/EthereumSetup.t.sol";
+import {ForkBlocks} from "test/integration/utils/foundry/config/ForkBlocks.sol";
 
 /// @title ValueManipulationCheckTestBase
 /// @notice Base test contract for ValueManipulationCheck tests
 /// @dev Abstract contract that defines all tests. Concrete implementations configure fees.
 abstract contract ValueManipulationCheckTestBase is EthereumSetup {
-  constructor() EthereumSetup(24440000) {} // Recent Ethereum block
+  constructor() EthereumSetup(ForkBlocks.ETHEREUM) {} // Recent Ethereum block
 
   IValueManipulationCheck internal checker;
   PoolLogic internal testPool;

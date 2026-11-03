@@ -18,8 +18,8 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {SafeMathUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/v3/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import {ProxyFactory} from "./upgradability/ProxyFactory.sol";
 import {IAssetHandler} from "./interfaces/IAssetHandler.sol";

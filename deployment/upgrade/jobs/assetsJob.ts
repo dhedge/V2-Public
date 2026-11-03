@@ -1,15 +1,15 @@
 import fs from "fs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { hasDuplicates, proposeTransactions, MetaTransactionData } from "../../deploymentHelpers";
+import { proposeTransactions, MetaTransactionData } from "../../helpers/safe";
 import { IAddresses, IFileNames, IJob, IUpgradeConfig, IVersions } from "../../types";
 import { TDeployedAsset } from "./oracles/oracleTypes";
-import { configureContractGuard } from "./assetContractGuardHelpers";
-import { getOracle } from "./oracles/assetsJobHelpers";
+import { configureContractGuard } from "./contractGuards/configureContractGuard";
+import { getOracle } from "./oracles/getOracle";
 import { TAssetConfig } from "./oracles/oracleTypes";
 
 export enum AssetType {
   "Chainlink direct USD price feed with 8 decimals" = 0,
-  "Synthetix synth with Chainlink direct USD price feed" = 1,
+  "Nested Vault Asset" = 1,
   "Sushi LP tokens" = 2,
   "Aave V2 Lending Pool Asset" = 3,
   "Lending Enable Asset" = 4,
@@ -55,6 +55,22 @@ export enum AssetType {
   "Reward Asset" = 200,
   "Deprecated Asset" = 999,
 }
+
+const hasDuplicates = <T extends Record<string, unknown>>(array: T[], keyCreator: (v: T) => string) => {
+  const valueArr = array
+    .map(keyCreator)
+    .filter(Boolean)
+    .map((x) => x.toLowerCase());
+
+  const dups = valueArr.filter((item, index) => valueArr.indexOf(item) !== index);
+
+  if (dups.length) {
+    console.log("Duplicates", dups);
+    return true;
+  } else {
+    return false;
+  }
+};
 
 export const assetsJob: IJob<void> = async (
   config: IUpgradeConfig,

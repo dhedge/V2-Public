@@ -6,7 +6,7 @@ pragma abicoder v2;
 import {EthereumConfig} from "test/integration/utils/foundry/config/EthereumConfig.sol";
 import {OptimismConfig} from "test/integration/utils/foundry/config/OptimismConfig.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/v3/contracts/token/ERC20/ERC20.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {Governance} from "contracts/Governance.sol";

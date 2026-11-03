@@ -34,8 +34,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/v3/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/v3/contracts/token/ERC20/IERC20.sol";
 
 import "./LyraOptionMarketWrapperContractGuard.sol";
 import "../../interfaces/IERC20Extended.sol";

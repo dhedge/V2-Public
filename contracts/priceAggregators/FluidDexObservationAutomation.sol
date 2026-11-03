@@ -17,7 +17,7 @@
 
 pragma solidity 0.8.28;
 
-import {Ownable} from "@openzeppelin/v5/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AutomationCompatible} from "../utils/chainlink/AutomationCompatible.sol";
 import {FluidDexObservationAggregator} from "./FluidDexObservationAggregator.sol";
 

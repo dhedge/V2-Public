@@ -1,0 +1,16 @@
+{
+  "EasySwapperV2_completeWithdrawal": "106779",
+  "EasySwapperV2_deposit": "477144",
+  "EasySwapperV2_depositWithCustomCooldown": "481598",
+  "EasySwapperV2_initWithdrawal": "979180",
+  "EasySwapperV2_nativeDepositWithCustomCooldown": "473219",
+  "createFund": "1200982",
+  "deposit_first": "444105",
+  "deposit_subsequent": "411269",
+  "execTransaction_approve": "178788",
+  "mintManagerFee": "263053",
+  "totalFundValue_two_assets": "133670",
+  "withdrawSafe_full": "354708",
+  "withdrawSafe_partial": "384975",
+  "withdrawToSafe": "387441"
+}
